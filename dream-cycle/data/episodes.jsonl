@@ -1,0 +1,5 @@
+{"action": "recall", "query": "podman container deploy", "scope": "all", "project": "portfolio-manager", "results": 1, "top_score": 0.125, "timestamp": "2026-04-21T08:43:56.393794+00:00"}
+{"action": "recall", "query": "bun test mock", "scope": "stack", "project": "", "results": 1, "top_score": 0.13333333333333333, "timestamp": "2026-04-21T08:43:56.422067+00:00"}
+{"action": "recall", "query": "selectai processor", "scope": "project", "project": "", "results": 1, "top_score": 0.08333333333333333, "timestamp": "2026-04-21T08:43:56.450591+00:00"}
+{"action": "recall", "query": "podman ufw container", "scope": "all", "project": "", "results": 1, "top_score": 0.2, "timestamp": "2026-04-21T09:11:55.290520+00:00"}
+{"action": "recall", "query": "bun mock test", "scope": "stack", "project": "", "results": 1, "top_score": 0.13333333333333333, "timestamp": "2026-04-21T09:11:55.322419+00:00"}

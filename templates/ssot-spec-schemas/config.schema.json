@@ -1,0 +1,115 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://wes-ptms.local/schemas/config.schema.json",
+  "title": "PTMS Configuration Schema",
+  "description": "Schema for defining configuration sections in the WES-PTMS Single Source of Truth",
+  "type": "object",
+  "required": ["name", "description", "version", "section", "properties"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Configuration section name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "section": {
+      "type": "string",
+      "description": "appsettings.json section path (e.g., 'RabbitMQ', 'FIX.ValidationSettings')"
+    },
+    "properties": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/configProperty"
+      },
+      "minItems": 1
+    },
+    "environmentVariables": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/envVar"
+      },
+      "description": "Environment variable overrides"
+    }
+  },
+  "definitions": {
+    "configProperty": {
+      "type": "object",
+      "required": ["name", "type", "description"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["string", "integer", "decimal", "boolean", "duration", "array", "object"]
+        },
+        "description": {
+          "type": "string"
+        },
+        "default": {
+          "description": "Default value"
+        },
+        "required": {
+          "type": "boolean",
+          "default": false
+        },
+        "sensitive": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether this is a secret/credential"
+        },
+        "minimum": {
+          "type": "number"
+        },
+        "maximum": {
+          "type": "number"
+        },
+        "pattern": {
+          "type": "string",
+          "description": "Regex pattern for validation"
+        },
+        "enum": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Allowed values"
+        },
+        "items": {
+          "type": "object",
+          "description": "For array types, schema of array items"
+        },
+        "properties": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/configProperty" },
+          "description": "For object types, nested properties"
+        },
+        "examples": {
+          "type": "array",
+          "description": "Example values"
+        }
+      }
+    },
+    "envVar": {
+      "type": "object",
+      "required": ["name", "property"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Environment variable name"
+        },
+        "property": {
+          "type": "string",
+          "description": "Property path this overrides"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

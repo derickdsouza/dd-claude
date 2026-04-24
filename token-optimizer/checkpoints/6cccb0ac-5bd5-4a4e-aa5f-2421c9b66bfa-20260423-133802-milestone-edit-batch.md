@@ -1,0 +1,34 @@
+# Session State Checkpoint
+Generated: 2026-04-23T13:38:02Z | Trigger: milestone-edit-batch | Fill: 13% | Quality: 83.6 | Git: gitbutler/workspace@65f2744c
+
+## Active Task
+but teardown
+
+## Key Decisions
+- You mentioned copying the beadswave skill files instead of editing
+- Now regarding your request to copy from the beadswave skill instead of editing — the skill templates are generic scaffolding
+
+## Recently Read
+- /Users/derickdsouza/Projects/development/mfcapp/.mergify.yml
+- /Users/derickdsouza/Projects/development/mfcapp/.claude/settings.local.json
+- /Users/derickdsouza/Projects/development/mfcapp/.beads/prompts/create-pr.md
+- /Users/derickdsouza/Projects/development/mfcapp/scripts/setup-dev.sh
+- /Users/derickdsouza/Projects/development/mfcapp/.github/workflows/auto-merge.yml
+- /Users/derickdsouza/Projects/development/mfcapp/.github/workflows/direct-push-alert.yml
+- /Users/derickdsouza/Projects/development/mfcapp/barts-brain.md
+- /Users/derickdsouza/Projects/development/mfcapp/.beadswave/templates.lock.json
+
+## Open Questions
+- This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Summary:
+1. Primary Request and Intent:
+   The
+
+## Continuation
+GitButler is still active in this repo. The current branch is `gitbutler/workspace` with uncommitted changes. To tear down GitButler properly:
+
+1. Stash/commit the current changes
+2. Remove `.git/gitbutler/` directory
+3. Delete the `gitbutler/workspace` and `gitbutler/target` branches
+4. Switch to `

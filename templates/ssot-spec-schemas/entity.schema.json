@@ -1,0 +1,192 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://wes-ptms.local/schemas/entity.schema.json",
+  "title": "PTMS Entity Schema",
+  "description": "Schema for defining domain entities in the WES-PTMS Single Source of Truth",
+  "type": "object",
+  "required": ["name", "description", "version", "fields"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Entity name in PascalCase"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of the entity"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version of this entity definition"
+    },
+    "tableName": {
+      "type": "string",
+      "description": "Database table name (defaults to pluralized entity name)"
+    },
+    "fields": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/field"
+      },
+      "minItems": 1
+    },
+    "relationships": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/relationship"
+      }
+    },
+    "indexes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/index"
+      }
+    },
+    "validation": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/validationRule"
+      }
+    },
+    "audit": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean", "default": true },
+        "trackCreated": { "type": "boolean", "default": true },
+        "trackUpdated": { "type": "boolean", "default": true },
+        "trackBy": { "type": "boolean", "default": true }
+      }
+    }
+  },
+  "definitions": {
+    "field": {
+      "type": "object",
+      "required": ["name", "type"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Field name in PascalCase"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["string", "integer", "decimal", "boolean", "date", "datetime", "enum", "json", "text"]
+        },
+        "description": {
+          "type": "string"
+        },
+        "primary": {
+          "type": "boolean",
+          "default": false
+        },
+        "required": {
+          "type": "boolean",
+          "default": false
+        },
+        "unique": {
+          "type": "boolean",
+          "default": false
+        },
+        "maxLength": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "minLength": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "precision": {
+          "type": "integer",
+          "description": "For decimal types, total digits"
+        },
+        "scale": {
+          "type": "integer",
+          "description": "For decimal types, decimal places"
+        },
+        "default": {
+          "description": "Default value for the field"
+        },
+        "values": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "For enum types, list of allowed values"
+        },
+        "references": {
+          "type": "string",
+          "pattern": "^[A-Z][a-zA-Z]+\\.[A-Z][a-zA-Z]+$",
+          "description": "Foreign key reference in format Entity.Field"
+        },
+        "nullable": {
+          "type": "boolean",
+          "default": true
+        },
+        "encrypted": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether this field should be encrypted at rest"
+        },
+        "sensitive": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether this field contains PII or sensitive data"
+        }
+      }
+    },
+    "relationship": {
+      "type": "object",
+      "required": ["name", "type", "target"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["one-to-one", "one-to-many", "many-to-one", "many-to-many"]
+        },
+        "target": {
+          "type": "string",
+          "description": "Target entity name"
+        },
+        "foreignKey": {
+          "type": "string",
+          "description": "Foreign key field name"
+        },
+        "through": {
+          "type": "string",
+          "description": "Junction table for many-to-many relationships"
+        }
+      }
+    },
+    "index": {
+      "type": "object",
+      "required": ["fields"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "fields": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "unique": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "validationRule": {
+      "type": "object",
+      "required": ["rule", "message"],
+      "properties": {
+        "rule": {
+          "type": "string",
+          "description": "Validation expression"
+        },
+        "message": {
+          "type": "string",
+          "description": "Error message when validation fails"
+        }
+      }
+    }
+  }
+}

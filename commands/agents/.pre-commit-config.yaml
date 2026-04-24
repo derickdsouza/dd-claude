@@ -1,0 +1,24 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-added-large-files
+        exclude: ".*\\.(md|MD)$"
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: detect-private-key
+  - repo: https://github.com/asottile/yesqa
+    rev: v1.5.0
+    hooks:
+      - id: yesqa
+        additional_dependencies: []
+  - repo: local
+    hooks:
+      - id: ai-commit-protocol-guard
+        name: AI Commit Protocol Guard
+        entry: bash -c 'if git diff --cached --name-only | grep -q "\\.md$"; then echo "[info] markdown changes staged"; fi'
+        language: system
+        pass_filenames: false
+        stages: [commit]

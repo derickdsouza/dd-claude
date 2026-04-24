@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# .beadswave/pre-ship.sh — Rust / Cargo starter template.
+#
+# Gates covered: fmt, clippy (-D warnings), cargo test, cargo audit.
+# Customize by:
+# - adding cargo deny check for license/ban lists
+# - adding cargo-nextest if you use it instead of `cargo test`
+# - adding cargo doc --no-deps if you publish API docs
+# - adding feature-matrix tests (cargo hack) for multi-feature crates
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+# Optional: abort early if uncommitted changes in the working tree.
+# bd-ship sets PRESHIP_ISOLATE=1 by default. Set PRESHIP_ISOLATE=0 only if you
+# intentionally want legacy non-isolated behaviour.
+_BEADSWAVE_CHECK="${BEADSWAVE_SKILL_DIR:-$HOME/.claude/skills/beadswave}/scripts/check-working-tree.sh"
+if [[ -f "$_BEADSWAVE_CHECK" ]]; then
+  # shellcheck disable=SC1090
+  . "$_BEADSWAVE_CHECK"
+  beadswave_check_working_tree || exit 1
+fi
+
+_BEADSWAVE_RUNTIME="${BEADSWAVE_SKILL_DIR:-$HOME/.claude/skills/beadswave}/scripts/runtime.sh"
+if [[ -f "$_BEADSWAVE_RUNTIME" ]]; then
+  # shellcheck disable=SC1090
+  . "$_BEADSWAVE_RUNTIME"
+else
+  echo "✗ beadswave runtime missing at $_BEADSWAVE_RUNTIME" >&2
+  exit 1
+fi
+
+# Prune stale logs from previous failed runs (>1 day old).
+find "${TMPDIR:-/tmp}" -maxdepth 1 -name 'preship.*' -mtime +1 -delete 2>/dev/null || true
+
+echo "▶ Pre-ship gates (rust / cargo)"
+
+beadswave_run_gate "cargo fmt"    "cargo fmt --all -- --check" || exit 1
+beadswave_run_gate "cargo clippy" "cargo clippy --all-targets --all-features -- -D warnings" || exit 1
+beadswave_run_gate "cargo test"   "cargo test --all-features" || exit 1
+beadswave_run_gate "cargo audit"  "cargo audit" || exit 1
+beadswave_run_gate "cargo build"  "cargo build --release --all-features" || exit 1
+
+echo "✓ Pre-ship gates passed"

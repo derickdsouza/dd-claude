@@ -1,0 +1,2 @@
+{"pattern_id": "8a25a1e08a0b", "action": "graduate", "rationale": "SelectAI processor robustness across 7 architecture rounds", "scope": "project", "project": "portfolio-manager", "timestamp": "2026-04-21T08:43:56.334333+00:00"}
+{"pattern_id": "5f14b0eed63e", "action": "graduate", "rationale": "DuckDB transaction safety in data-fetcher across multiple storage rounds", "scope": "project", "project": "portfolio-manager", "timestamp": "2026-04-21T08:46:15.215834+00:00"}

@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "generated": "2026-04-23T13:47:05Z",
+  "trigger": "stop",
+  "fill_pct": null,
+  "quality_score": null,
+  "session_id": "6cccb0ac-5bd5-4a4e-aa5f-2421c9b66bfa",
+  "git": {
+    "branch": "fix/data-fetcher-scheduler",
+    "sha": "faa8ed49"
+  },
+  "active_task": "yes",
+  "active_plan": null,
+  "todos": [],
+  "modified_files": [],
+  "recent_reads": [
+    "/Users/derickdsouza/Projects/development/mfcapp/.mergify.yml",
+    "/Users/derickdsouza/Projects/development/mfcapp/.claude/settings.local.json",
+    "/Users/derickdsouza/Projects/development/mfcapp/.beads/prompts/create-pr.md",
+    "/Users/derickdsouza/Projects/development/mfcapp/scripts/setup-dev.sh",
+    "/Users/derickdsouza/Projects/development/mfcapp/.github/workflows/auto-merge.yml",
+    "/Users/derickdsouza/Projects/development/mfcapp/.github/workflows/direct-push-alert.yml",
+    "/Users/derickdsouza/Projects/development/mfcapp/barts-brain.md",
+    "/Users/derickdsouza/Projects/development/mfcapp/.beadswave/templates.lock.json"
+  ],
+  "decisions": [
+    "You mentioned copying the beadswave skill files instead of editing",
+    "Now regarding your request to copy from the beadswave skill instead of editing \u2014 the skill templates are generic scaffolding",
+    "Let me verify `fix/data-fetcher-scheduler` has the working tree change but isn't showing because it's uncommitted"
+  ],
+  "open_questions": [],
+  "error_context": [],
+  "agent_state": [],
+  "continuation": "Here's the review:\n\n**`fix/data-fetcher-scheduler`** \u2014 Clean and safe to ship:\n- Adds `weekly_issued_capital` pipeline (calls `fetch_issued_capital.py --force`)\n- Adds systemd `.service` + `.timer` for Sunday 00:30 IST\n- 3 files, +38 lines, no risk\n\n**`experimental-holding`** \u2014 Do NOT ship:\n- Branched from current HEAD but re-adds `.mergify.yml`, `.husky/pre-commit`, and other files we just cleaned up\n- 868 files changed, net -34K lines \u2014 would revert the majority of recent work\n- Only 4 genuine"
+}

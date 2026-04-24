@@ -1,0 +1,128 @@
+{
+  "env": {},
+  "permissions": {
+    "allow": [
+      "Bash(rm -f .git/*.lock)",
+      "Bash(rm -f .git/*.lock*)",
+      "Bash(rm -f .git/index.lock)",
+      "Bash(rm -f .git/background-refresh.lock)",
+      "Bash(rm -f .git/index.lock .git/background-refresh.lock)",
+      "Bash(rm -f **/.git/*.lock)",
+      "Bash(rm -f **/.git/*.lock*)",
+      "Bash(rm -f *.lock)",
+      "Bash(rm -f */*.lock)",
+      "Bash(rm -f **/*.lock)"
+    ]
+  },
+  "model": "haiku",
+  "enableAllProjectMcpServers": false,
+  "disabledMcpjsonServers": [
+    "brave-search",
+    "shadcn-ui-server",
+    "magic",
+    "context7",
+    "playwright",
+    "github"
+  ],
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "permission_request|error|waiting_for_input",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/notify.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "search_replace|write|run_terminal_cmd",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/complete.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bd prime"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.command // \"\"' | grep -qE '(^|[[:space:]])but[[:space:]]' && rm -f .git/*.lock .git/background-refresh.lock 2>/dev/null; true",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/session_start.sh",
+            "timeout": 2
+          }
+        ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bd prime"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/session_end.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/session_start.sh",
+            "timeout": 2
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline-command.sh"
+  },
+  "enabledPlugins": {
+    "typescript-lsp@claude-plugins-official": true
+  },
+  "alwaysThinkingEnabled": true,
+  "effortLevel": "xhigh",
+  "skipDangerousModePermissionPrompt": true
+}

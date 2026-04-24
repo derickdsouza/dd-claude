@@ -1,0 +1,8 @@
+{
+  "id": "16",
+  "subject": "R192.8: Add OTel spans to non-EMS critical paths",
+  "description": "Add OTel spans to non-EMS critical paths",
+  "status": "pending",
+  "blocks": [],
+  "blockedBy": []
+}

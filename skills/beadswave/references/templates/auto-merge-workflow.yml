@@ -1,0 +1,101 @@
+name: Auto-Merge
+
+# Event-driven auto-merge gate. Runs on every PR event and publishes a
+# `proceed=true/false` output that Mergify can observe as a required check.
+#
+# Gates (in order — first failure short-circuits):
+#   1. Kill switch (.auto-merge-disabled file in repo root)
+#   2. Blackout window (optional — trading hours, deploy freezes, maintenance)
+#
+# See beadswave skill `references/ship-pipeline.md` for full architecture.
+
+on:
+  pull_request:
+    types: [opened, labeled, unlabeled, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+
+jobs:
+  gate:
+    name: Gate (kill switch + blackout)
+    runs-on: ubuntu-latest
+    outputs:
+      proceed: ${{ steps.check.outputs.proceed }}
+      reason: ${{ steps.check.outputs.reason }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Check kill switch
+        id: kill
+        run: |
+          if [ -f .auto-merge-disabled ]; then
+            echo "proceed=false" >> "$GITHUB_OUTPUT"
+            echo "reason=kill-switch-active" >> "$GITHUB_OUTPUT"
+            echo "Auto-merge disabled by .auto-merge-disabled file."
+            exit 0
+          fi
+          echo "proceed=true" >> "$GITHUB_OUTPUT"
+
+      # ────────────────────────────────────────────────────────────────────
+      # BLACKOUT WINDOW (CUSTOMIZE OR DELETE)
+      #
+      # If your repo deploys into a system with quiet hours (trading market
+      # hours, release freezes, maintenance windows), replace the body of
+      # this step with a check that exits with proceed=false during those
+      # windows. If you don't need one, delete this entire step.
+      #
+      # Example: NSE market hours (09:15-15:30 IST, Mon-Fri):
+      #   now_ist=$(TZ=Asia/Kolkata date '+%H:%M')
+      #   dow=$(TZ=Asia/Kolkata date '+%u')
+      #   if [ "$dow" -le 5 ] && [[ "$now_ist" > "09:14" ]] && [[ "$now_ist" < "15:31" ]]; then
+      #     echo "proceed=false" >> "$GITHUB_OUTPUT"
+      #     echo "reason=blackout-window" >> "$GITHUB_OUTPUT"
+      #     exit 0
+      #   fi
+      # ────────────────────────────────────────────────────────────────────
+      - name: Check blackout window
+        id: check
+        if: steps.kill.outputs.proceed == 'true'
+        run: |
+          # Replace with your blackout-window logic, or delete this step entirely.
+          echo "proceed=true" >> "$GITHUB_OUTPUT"
+          echo "reason=ok" >> "$GITHUB_OUTPUT"
+          echo "No blackout window configured — proceeding."
+
+  report:
+    name: Report gate decision
+    needs: gate
+    if: needs.gate.outputs.proceed == 'false' && github.event.pull_request != null
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment on PR explaining the hold
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          reason="${{ needs.gate.outputs.reason }}"
+          case "$reason" in
+            kill-switch-active)
+              body="Auto-merge is currently disabled via \`.auto-merge-disabled\` file. Remove the file to re-enable."
+              ;;
+            blackout-window)
+              body="Auto-merge paused — inside a configured blackout window. Will retry after it closes."
+              ;;
+            *)
+              body="Auto-merge gate blocked: \`$reason\`"
+              ;;
+          esac
+          # Only comment once per reason to avoid spam.
+          existing=$(gh pr view "${{ github.event.pull_request.number }}" \
+            --repo "${{ github.repository }}" \
+            --json comments \
+            --jq ".comments | map(select(.body | contains(\"auto-merge gate\") or contains(\"Auto-merge paused\") or contains(\"Auto-merge is currently disabled\"))) | length")
+          if [ "$existing" = "0" ]; then
+            gh pr comment "${{ github.event.pull_request.number }}" \
+              --repo "${{ github.repository }}" \
+              --body "$body"
+          fi

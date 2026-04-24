@@ -1,0 +1,66 @@
+{
+  "claude-code-plugins-plus": {
+    "source": {
+      "source": "github",
+      "repo": "jeremylongshore/claude-code-plugins"
+    },
+    "installLocation": "/Users/derickdsouza/.claude/plugins/marketplaces/claude-code-plugins-plus",
+    "lastUpdated": "2026-02-02T09:51:26.608Z"
+  },
+  "claude-plugins-official": {
+    "source": {
+      "source": "github",
+      "repo": "anthropics/claude-plugins-official"
+    },
+    "installLocation": "/Users/derickdsouza/.claude/plugins/marketplaces/claude-plugins-official",
+    "lastUpdated": "2026-04-24T13:55:25.227Z"
+  },
+  "claude-code-plugins": {
+    "source": {
+      "source": "github",
+      "repo": "anthropics/claude-code"
+    },
+    "installLocation": "/Users/derickdsouza/.claude/plugins/marketplaces/claude-code-plugins",
+    "lastUpdated": "2026-04-24T13:55:24.981Z"
+  },
+  "superpowers-marketplace": {
+    "source": {
+      "source": "github",
+      "repo": "obra/superpowers-marketplace"
+    },
+    "installLocation": "/Users/derickdsouza/.claude/plugins/marketplaces/superpowers-marketplace",
+    "lastUpdated": "2026-02-23T08:21:58.291Z"
+  },
+  "compound-engineering-plugin": {
+    "source": {
+      "source": "github",
+      "repo": "EveryInc/compound-engineering-plugin"
+    },
+    "installLocation": "/Users/derickdsouza/.claude/plugins/marketplaces/compound-engineering-plugin",
+    "lastUpdated": "2026-04-15T10:34:08.692Z"
+  },
+  "context-mode": {
+    "source": {
+      "source": "github",
+      "repo": "mksglu/context-mode"
+    },
+    "installLocation": "/Users/derickdsouza/.claude/plugins/marketplaces/context-mode",
+    "lastUpdated": "2026-04-21T05:57:38.171Z"
+  },
+  "alexgreensh-token-optimizer": {
+    "source": {
+      "source": "github",
+      "repo": "alexgreensh/token-optimizer"
+    },
+    "installLocation": "/Users/derickdsouza/.claude/plugins/marketplaces/alexgreensh-token-optimizer",
+    "lastUpdated": "2026-04-21T05:58:33.508Z"
+  },
+  "karpathy-skills": {
+    "source": {
+      "source": "github",
+      "repo": "forrestchang/andrej-karpathy-skills"
+    },
+    "installLocation": "/Users/derickdsouza/.claude/plugins/marketplaces/karpathy-skills",
+    "lastUpdated": "2026-04-21T11:32:18.050Z"
+  }
+}

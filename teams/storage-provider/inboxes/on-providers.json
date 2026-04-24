@@ -1,0 +1,15 @@
+[
+  {
+    "from": "on-providers",
+    "text": "{\"type\":\"task_assignment\",\"taskId\":\"7\",\"subject\":\"on-providers\",\"description\":\"Create ON provider implementations for the storage provider architecture. The backend is at /Users/d\",\"assignedBy\":\"on-providers\",\"timestamp\":\"2026-02-13T07:45:45.564Z\"}",
+    "timestamp": "2026-02-13T07:45:45.564Z",
+    "color": "green",
+    "read": true
+  },
+  {
+    "from": "team-lead",
+    "text": "{\"type\":\"shutdown_request\",\"requestId\":\"shutdown-1770968908091@on-providers\",\"from\":\"team-lead\",\"reason\":\"Phase 3 is complete - I wrote the ON provider files myself. Thank you, you can shut down.\",\"timestamp\":\"2026-02-13T07:48:28.091Z\"}",
+    "timestamp": "2026-02-13T07:48:28.091Z",
+    "read": true
+  }
+]

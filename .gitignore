@@ -1,0 +1,75 @@
+# External tool repositories (keep separately, don't track)
+plugins/marketplaces/
+skills/visual-explainer/
+
+# Plugin cache and data directories
+plugins/cache/
+plugins/data/
+.codex/
+
+# Large directories (cache, telemetry, history)
+projects/
+telemetry/
+file-history/
+todos/
+paste-cache/
+get-shit-done/
+context-mode/
+
+# Logs
+logs/
+**/*.log
+
+# Backup files
+*.bak
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
+.tox/
+
+# Node.js
+node_modules/
+package-lock.json
+yarn.lock
+
+# Environment and secrets
+.env
+.env.local
+*.key
+*.pem
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# System/temp
+.cache/
+.tmp/
+*.tmp
+
+# Lock files and state files
+*.lock
+*.state
+
+# Runtime/session state files (change per session)
+security_warnings_state_*.json
+*.backup
+history.jsonl
+
+# Generated/temporary files
+config.json

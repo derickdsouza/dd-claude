@@ -1,0 +1,85 @@
+# Mergify — queue rules for serialized auto-merge.
+#
+# Free-tier-safe. Pairs with .github/workflows/auto-merge.yml which handles
+# kill-switch and blackout-window gates (can't be expressed as Mergify conditions).
+#
+# See beadswave skill `references/ship-pipeline.md` for full architecture.
+#
+# ─── CI MODE ────────────────────────────────────────────────────────────
+# This template ships in CI-DISABLED mode (merge_conditions: []).
+# Pre-ship checks (.beadswave/pre-ship.sh) are the sole quality gate.
+# The `auto-merge` label on a PR is proof that bd-ship ran all gates green.
+#
+# To enable CI gating (recommended when CI is stable):
+#   1. Ensure .github/workflows/ci.yml has push/pull_request triggers
+#   2. Replace merge_conditions: [] with your CI job names:
+#        merge_conditions:
+#          - check-success = "Migration Check"
+#          - check-success = "Security Scan"
+#          - check-success = "Frontend Tests"
+#   3. Confirm job names with:
+#        gh run view <run-id> --json jobs --jq '.jobs[].name'
+# ────────────────────────────────────────────────────────────────────────
+
+queue_rules:
+  # ───────────────────────────────────────────────────────────────────
+  # Hotfix queue — free-tier stand-in for Mergify's paid `priority_rules`.
+  # Mergify drains queues in definition order, so any PR labeled
+  # `priority:p0` jumps ahead of everything in `default`. bd-ship applies
+  # this label when the bead is P0 AND type is `bug` or `incident` AND
+  # the change does NOT trip a hold heuristic.
+  # ───────────────────────────────────────────────────────────────────
+  - name: hotfix
+    queue_conditions:
+      - label = auto-merge
+      - label = priority:p0
+      - -label = auto-merge:hold
+      - -draft
+      - base = main
+    # CI-DISABLED: pre-ship checks are the gate. See header to re-enable CI.
+    merge_conditions: []
+    merge_method: merge
+    update_method: merge
+
+  # ───────────────────────────────────────────────────────────────────
+  # Default queue — everything not labeled priority:p0.
+  # ───────────────────────────────────────────────────────────────────
+  - name: default
+    # Who can enter the queue — all must match.
+    queue_conditions:
+      - label = auto-merge
+      - -label = priority:p0
+      - -label = auto-merge:hold
+      - -draft
+      - base = main
+    # CI-DISABLED: pre-ship checks are the gate. See header to re-enable CI.
+    merge_conditions: []
+    merge_method: merge
+    # Rebase the queued PR onto latest main before merging.
+    update_method: merge
+
+# Free-tier gotcha: queue_conditions above do NOT auto-queue matching PRs.
+# The `@mergifyio queue` command is required — bd-ship.sh posts it automatically.
+# Manual PRs need the comment posted by hand.
+#
+# Paid-tier-only keys (do NOT add on free tier — will break schema):
+#   - batch_max_size
+#   - batch_max_wait_time
+#   - speculative_checks
+#   - priority_rules (with priority:)
+#   - dequeue: {} action
+#   - disallow_checks_interruption_from_queues
+
+pull_request_rules:
+  # UX comment when someone holds a PR. The actual dequeue is automatic via
+  # `-label = auto-merge:hold` in queue_conditions.
+  - name: Comment when hold label added
+    conditions:
+      - label = auto-merge:hold
+    actions:
+      comment:
+        message: |
+          Dequeued: `auto-merge:hold` label was applied. Remove the label to re-queue.
+
+  # Branch deletion after merge is handled by GitHub's repo-level setting:
+  # Settings → General → Pull Requests → "Automatically delete head branches".

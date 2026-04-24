@@ -1,0 +1,41 @@
+# Session State Checkpoint
+Generated: 2026-04-23T13:35:42Z | Trigger: milestone-edit-batch | Fill: 13% | Quality: 83.6 | Git: gitbutler/workspace@65f2744c
+
+## Active Task
+<bash-stdout>On branch gitbutler/workspace
+Your branch is ahead of 'origin/main' by 1 commit.
+  (use "git push" to publish your local commits)
+
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working 
+
+## Key Decisions
+- You mentioned copying the beadswave skill files instead of editing
+- Now regarding your request to copy from the beadswave skill instead of editing — the skill templates are generic scaffolding
+
+## Recently Read
+- /Users/derickdsouza/Projects/development/mfcapp/.mergify.yml
+- /Users/derickdsouza/Projects/development/mfcapp/.claude/settings.local.json
+- /Users/derickdsouza/Projects/development/mfcapp/.beads/prompts/create-pr.md
+- /Users/derickdsouza/Projects/development/mfcapp/scripts/setup-dev.sh
+- /Users/derickdsouza/Projects/development/mfcapp/.github/workflows/auto-merge.yml
+- /Users/derickdsouza/Projects/development/mfcapp/.github/workflows/direct-push-alert.yml
+- /Users/derickdsouza/Projects/development/mfcapp/barts-brain.md
+- /Users/derickdsouza/Projects/development/mfcapp/.beadswave/templates.lock.json
+
+## Open Questions
+- has the portfolio-manger repo been cleaned up of all gitbutler and mergidy references/instructions/scripts?
+- This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Summary:
+1. Primary Request and Intent:
+   The
+
+## Continuation
+Done. Both repos are fully clean of GitButler and Mergify references.
+
+**mfcapp changes (7 files):**
+- Deleted `.mergify.yml`
+- Cleaned `.claude/settings.local.json` (removed `but`/gitbutler lock permissions)
+- Rewrote `.beads/prompts/create-pr.md` (removed GitButler/Mergify, removed priority/p0 que

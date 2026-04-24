@@ -1,0 +1,382 @@
+{
+  "version": 2,
+  "plugins": {
+    "playground@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-plugins-official/playground/unknown",
+        "version": "unknown",
+        "installedAt": "2026-02-18T19:18:44.821Z",
+        "lastUpdated": "2026-04-14T10:13:28.032Z",
+        "gitCommitSha": "ff736a6da8b6060ba94228f168f4a62636cb120a"
+      }
+    ],
+    "context7@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-plugins-official/context7/unknown",
+        "version": "unknown",
+        "installedAt": "2026-02-18T19:19:37.948Z",
+        "lastUpdated": "2026-04-14T10:13:28.029Z",
+        "gitCommitSha": "ff736a6da8b6060ba94228f168f4a62636cb120a"
+      }
+    ],
+    "code-review@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-plugins-official/code-review/unknown",
+        "version": "unknown",
+        "installedAt": "2026-02-18T19:29:22.756Z",
+        "lastUpdated": "2026-04-14T10:13:28.031Z",
+        "gitCommitSha": "ff736a6da8b6060ba94228f168f4a62636cb120a"
+      }
+    ],
+    "github@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-plugins-official/github/unknown",
+        "version": "unknown",
+        "installedAt": "2026-03-08T19:23:37.886Z",
+        "lastUpdated": "2026-04-14T10:13:28.033Z",
+        "gitCommitSha": "205b6e0b30366a969412d9aab7b99bea99d58db1"
+      }
+    ],
+    "feature-dev@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-plugins-official/feature-dev/unknown",
+        "version": "unknown",
+        "installedAt": "2026-03-08T19:23:37.894Z",
+        "lastUpdated": "2026-04-14T10:13:28.031Z",
+        "gitCommitSha": "205b6e0b30366a969412d9aab7b99bea99d58db1"
+      }
+    ],
+    "code-simplifier@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-plugins-official/code-simplifier/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-03-08T19:23:37.900Z",
+        "lastUpdated": "2026-03-08T19:23:37.900Z",
+        "gitCommitSha": "205b6e0b30366a969412d9aab7b99bea99d58db1"
+      }
+    ],
+    "ralph-loop@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-plugins-official/ralph-loop/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-02-18T19:29:23.742Z",
+        "lastUpdated": "2026-03-30T06:53:24.544Z",
+        "gitCommitSha": "ff736a6da8b6060ba94228f168f4a62636cb120a"
+      }
+    ],
+    "typescript-lsp@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-plugins-official/typescript-lsp/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-04-16T08:55:17.015Z",
+        "lastUpdated": "2026-04-16T08:55:17.015Z"
+      }
+    ],
+    "playwright@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-plugins-official/playwright/unknown",
+        "version": "unknown",
+        "installedAt": "2026-02-18T19:29:23.748Z",
+        "lastUpdated": "2026-04-14T10:13:28.030Z",
+        "gitCommitSha": "ff736a6da8b6060ba94228f168f4a62636cb120a"
+      }
+    ],
+    "security-guidance@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-plugins-official/security-guidance/unknown",
+        "version": "unknown",
+        "installedAt": "2026-03-08T19:23:37.907Z",
+        "lastUpdated": "2026-04-14T10:13:28.029Z",
+        "gitCommitSha": "205b6e0b30366a969412d9aab7b99bea99d58db1"
+      }
+    ],
+    "pyright-lsp@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-plugins-official/pyright-lsp/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-03-08T19:23:37.918Z",
+        "lastUpdated": "2026-03-08T19:23:37.918Z",
+        "gitCommitSha": "205b6e0b30366a969412d9aab7b99bea99d58db1"
+      }
+    ],
+    "claude-md-management@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-plugins-official/claude-md-management/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-03-08T19:23:37.914Z",
+        "lastUpdated": "2026-03-08T19:23:37.914Z",
+        "gitCommitSha": "205b6e0b30366a969412d9aab7b99bea99d58db1"
+      }
+    ],
+    "agent-sdk-dev@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-plugins-official/agent-sdk-dev/unknown",
+        "version": "unknown",
+        "installedAt": "2026-02-18T19:29:23.769Z",
+        "lastUpdated": "2026-04-14T10:13:28.026Z",
+        "gitCommitSha": "ff736a6da8b6060ba94228f168f4a62636cb120a"
+      }
+    ],
+    "claude-code-setup@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-plugins-official/claude-code-setup/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-03-08T19:23:37.923Z",
+        "lastUpdated": "2026-03-08T19:23:37.923Z",
+        "gitCommitSha": "205b6e0b30366a969412d9aab7b99bea99d58db1"
+      }
+    ],
+    "hookify@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-plugins-official/hookify/unknown",
+        "version": "unknown",
+        "installedAt": "2026-02-18T19:29:23.787Z",
+        "lastUpdated": "2026-04-14T10:13:28.030Z",
+        "gitCommitSha": "ff736a6da8b6060ba94228f168f4a62636cb120a"
+      }
+    ],
+    "sentry@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-plugins-official/sentry/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-02-18T19:29:24.755Z",
+        "lastUpdated": "2026-02-18T19:29:24.755Z",
+        "gitCommitSha": "e489ce53f1d85cb35c0d059a49ca38616a4105a0"
+      }
+    ],
+    "skill-creator@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-plugins-official/skill-creator/unknown",
+        "version": "unknown",
+        "installedAt": "2026-02-19T04:45:22.187Z",
+        "lastUpdated": "2026-04-14T10:13:28.032Z",
+        "gitCommitSha": "452c38756951d28b940cd568689616bfb2cb3c3d"
+      }
+    ],
+    "commit-commands@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-plugins-official/commit-commands/unknown",
+        "version": "unknown",
+        "installedAt": "2026-02-19T04:52:59.711Z",
+        "lastUpdated": "2026-04-14T10:13:28.034Z",
+        "gitCommitSha": "452c38756951d28b940cd568689616bfb2cb3c3d"
+      }
+    ],
+    "pr-review-toolkit@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-plugins-official/pr-review-toolkit/unknown",
+        "version": "unknown",
+        "installedAt": "2026-02-19T04:52:59.716Z",
+        "lastUpdated": "2026-04-14T10:13:28.034Z",
+        "gitCommitSha": "452c38756951d28b940cd568689616bfb2cb3c3d"
+      }
+    ],
+    "semgrep@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-plugins-official/semgrep/0.5.3",
+        "version": "0.5.3",
+        "installedAt": "2026-02-21T07:14:19.523Z",
+        "lastUpdated": "2026-04-10T18:30:20.821Z",
+        "gitCommitSha": "b5bab16514897d36de10ebb14ebd5437095d9b9d"
+      }
+    ],
+    "csharp-lsp@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-plugins-official/csharp-lsp/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-03-23T10:21:09.472Z",
+        "lastUpdated": "2026-03-23T10:21:09.472Z",
+        "gitCommitSha": "61c0597779bd2d670dcd4fbbf37c66aa19eb2ce6"
+      }
+    ],
+    "000-jeremy-content-consistency-validator@claude-code-plugins-plus": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-code-plugins-plus/000-jeremy-content-consistency-validator/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-03-20T07:59:20.695Z",
+        "lastUpdated": "2026-03-20T07:59:20.695Z",
+        "gitCommitSha": "a774f2760bcb46eb3da06aa1894cac24e91f9b14"
+      }
+    ],
+    "access-control-auditor@claude-code-plugins-plus": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-code-plugins-plus/access-control-auditor/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-03-20T07:59:20.695Z",
+        "lastUpdated": "2026-03-20T07:59:20.695Z",
+        "gitCommitSha": "a774f2760bcb46eb3da06aa1894cac24e91f9b14"
+      }
+    ],
+    "agent-context-manager@claude-code-plugins-plus": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-code-plugins-plus/agent-context-manager/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-03-20T07:59:20.695Z",
+        "lastUpdated": "2026-03-20T07:59:20.695Z",
+        "gitCommitSha": "a774f2760bcb46eb3da06aa1894cac24e91f9b14"
+      }
+    ],
+    "ai-commit-gen@claude-code-plugins-plus": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-code-plugins-plus/ai-commit-gen/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-03-20T07:59:20.695Z",
+        "lastUpdated": "2026-03-20T07:59:20.695Z",
+        "gitCommitSha": "a774f2760bcb46eb3da06aa1894cac24e91f9b14"
+      }
+    ],
+    "ai-ethics-validator@claude-code-plugins-plus": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-code-plugins-plus/ai-ethics-validator/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-03-20T07:59:20.695Z",
+        "lastUpdated": "2026-03-20T07:59:20.695Z",
+        "gitCommitSha": "a774f2760bcb46eb3da06aa1894cac24e91f9b14"
+      }
+    ],
+    "ai-ml-engineering-pack@claude-code-plugins-plus": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-code-plugins-plus/ai-ml-engineering-pack/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-03-20T07:59:20.695Z",
+        "lastUpdated": "2026-03-20T07:59:20.695Z",
+        "gitCommitSha": "a774f2760bcb46eb3da06aa1894cac24e91f9b14"
+      }
+    ],
+    "ai-sdk-agents@claude-code-plugins-plus": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-code-plugins-plus/ai-sdk-agents/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-03-20T07:59:20.695Z",
+        "lastUpdated": "2026-03-20T07:59:20.695Z",
+        "gitCommitSha": "a774f2760bcb46eb3da06aa1894cac24e91f9b14"
+      }
+    ],
+    "alerting-rule-creator@claude-code-plugins-plus": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-code-plugins-plus/alerting-rule-creator/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-03-20T07:59:20.695Z",
+        "lastUpdated": "2026-03-20T07:59:20.695Z",
+        "gitCommitSha": "a774f2760bcb46eb3da06aa1894cac24e91f9b14"
+      }
+    ],
+    "anomaly-detection-system@claude-code-plugins-plus": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-code-plugins-plus/anomaly-detection-system/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-03-20T07:59:20.695Z",
+        "lastUpdated": "2026-03-20T07:59:20.695Z",
+        "gitCommitSha": "a774f2760bcb46eb3da06aa1894cac24e91f9b14"
+      }
+    ],
+    "superpowers@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7",
+        "version": "5.0.7",
+        "installedAt": "2026-03-20T08:15:02.905Z",
+        "lastUpdated": "2026-04-19T07:51:28.598Z",
+        "gitCommitSha": "8ea39819eed74fe2a0338e71789f06b30e953041"
+      }
+    ],
+    "frontend-design@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-plugins-official/frontend-design/unknown",
+        "version": "unknown",
+        "installedAt": "2026-03-20T08:56:19.879Z",
+        "lastUpdated": "2026-04-14T10:13:28.033Z",
+        "gitCommitSha": "b664e152af5742dd11b6a6e5d7a65848a8c5a261"
+      }
+    ],
+    "discord@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-plugins-official/discord/0.0.4",
+        "version": "0.0.4",
+        "installedAt": "2026-04-08T10:32:05.762Z",
+        "lastUpdated": "2026-04-08T10:32:05.762Z"
+      }
+    ],
+    "telegram@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/claude-plugins-official/telegram/0.0.6",
+        "version": "0.0.6",
+        "installedAt": "2026-04-08T10:34:31.440Z",
+        "lastUpdated": "2026-04-14T22:20:19.875Z"
+      }
+    ],
+    "compound-engineering@compound-engineering-plugin": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/compound-engineering-plugin/compound-engineering/2.65.0",
+        "version": "2.65.0",
+        "installedAt": "2026-04-15T10:34:41.517Z",
+        "lastUpdated": "2026-04-15T10:34:41.517Z",
+        "gitCommitSha": "8ec6d339fee38cf4306e6586f726486cbae713b0"
+      }
+    ],
+    "context-mode@context-mode": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/context-mode/context-mode/1.0.89",
+        "version": "1.0.89",
+        "installedAt": "2026-04-21T05:57:58.994Z",
+        "lastUpdated": "2026-04-21T06:02:04.596Z",
+        "gitCommitSha": "a2f108247ba6d60b04f2fc448f6322afac91cd71"
+      }
+    ],
+    "token-optimizer@alexgreensh-token-optimizer": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/alexgreensh-token-optimizer/token-optimizer/5.5.0",
+        "version": "5.5.0",
+        "installedAt": "2026-04-21T05:58:46.529Z",
+        "lastUpdated": "2026-04-21T05:58:46.529Z",
+        "gitCommitSha": "222263139e2a7cfc9cc330a4f57d8bb2610f74a4"
+      }
+    ],
+    "andrej-karpathy-skills@karpathy-skills": [
+      {
+        "scope": "user",
+        "installPath": "/Users/derickdsouza/.claude/plugins/cache/karpathy-skills/andrej-karpathy-skills/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-04-21T11:32:30.133Z",
+        "lastUpdated": "2026-04-21T11:32:30.133Z",
+        "gitCommitSha": "2c606141936f1eeef17fa3043a72095b4765b9c2"
+      }
+    ]
+  }
+}

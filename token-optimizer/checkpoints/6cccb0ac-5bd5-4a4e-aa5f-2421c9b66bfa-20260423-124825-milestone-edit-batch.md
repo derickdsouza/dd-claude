@@ -1,0 +1,59 @@
+# Session State Checkpoint
+Generated: 2026-04-23T12:48:25Z | Trigger: milestone-edit-batch | Fill: 9% | Quality: 81.9 | Git: gitbutler/workspace@65f2744c
+
+## Active Task
+retry
+
+## Key Decisions
+- The bd-ship test fails with exit 128 because the repo has no `origin` remote (no `origin/main` to rebase on)
+- The test must be failing because branch-prune
+- The branches aren't being deleted because `git branch -d` fails — the branches are at the same commit as main, so they should work
+- txt"` causes exit 1 because the last `read` returns 1
+- " — because the auto-discovery found no `fix/*` branches
+- The `git push -u origin "$BRANCH"` fails because the branch `fix/mfcapp-123` doesn't exist locally
+- Progress — the push succeeded but the trace doesn't contain `git\tpush\t-u\torigin\tfix/mfcapp-123` because `git push` is a real command, not a stubbed one
+- The trace doesn't have `git\tpush` because `git` is the real command, not a stub
+- I need to use the existing branch instead of creating it
+
+## Modified Files
+- /Users/derickdsouza/.claude/skills/beadswave/tests/test-beadswave-lint.sh [modified]
+- /Users/derickdsouza/.claude/skills/beadswave/tests/test-install.sh [modified]
+- /Users/derickdsouza/.claude/skills/beadswave/references/templates/branch-prune.sh [modified]
+
+## Recently Read
+- /Users/derickdsouza/Projects/development/portfolio-manager/docs/beadswave-strategy/auto-merge.md
+- /Users/derickdsouza/Projects/development/portfolio-manager/scripts/setup-dev.sh
+- /Users/derickdsouza/Projects/development/portfolio-manager/.github/workflows/auto-merge.yml
+- /Users/derickdsouza/Projects/development/portfolio-manager/.github/workflows/direct-push-alert.yml
+- /Users/derickdsouza/Projects/development/portfolio-manager/AGENTS.md
+- /Users/derickdsouza/Projects/development/portfolio-manager/.beadswave/templates.lock.json
+- /Users/derickdsouza/Projects/development/portfolio-manager/.beadswave/pre-ship.sh
+- /Users/derickdsouza/Projects/development/portfolio-manager/CLAUDE.md
+
+## Open Questions
+- has the portfolio-manger repo been cleaned up of all gitbutler and mergidy references/instructions/scripts?
+- This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Summary:
+1. Primary Request and Intent:
+   The
+
+## Error Context
+- Error: Now update the anti-pattern test assertion for `.git/*.lock`. The lint.sh now shows this as `✓ handles git lock cleanup` (informational), not `✗ uses 
+  Fix: Now **9. test-install.sh** — remove `.mergify.yml` from `create_install_adopted_repo` fixture.
+- Error: That's just the English word "but" in an error message string — not a command reference. Clean.
+
+Now let me run the tests to verify they pass.
+  Fix: 4 failures to fix. Let me investigate each.
+
+1. **test-bd-ship.sh** — lint gate failure test. The test expects exit code 6 for lint failure but might 
+- Error: Hmm, that worked! Exit 0. The issue is that `set -e` + the `read` loop is swallowing the `rm -rf` exit code or something in the `while` loop. Actually
+  Fix: The output is only "2 merged branch(es) found." but no prune messages. The script is exiting 1 after printing "found." — meaning the `while read` loop
+- Error: Exit 3 = push failed. The `git push -u origin "$BRANCH"` fails because the branch `fix/mfcapp-123` doesn't exist locally. The test runs bd-ship with `
+  Fix: I need to create the `fix/mfcapp-123` branch in each test that uses it. The fixture creates a bare remote with main, but the feature branches need to 
+
+## Continuation
+The only remaining hit is `price-generator.ts:142` — "but pull back hard" is natural English, not a GitButler reference. The portfolio-manager repo is fully clean of all GitButler and Mergify references.
+
+**Summary of this cleanup (7 files edited):**
+- `docs/beadswave-strategy/auto-merge.md` — Full 

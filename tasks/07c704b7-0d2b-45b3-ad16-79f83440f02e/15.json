@@ -1,0 +1,8 @@
+{
+  "id": "15",
+  "subject": "R190.2: Fix ESLint curly brace violations",
+  "description": "Fix 235 ESLint curly brace violations",
+  "status": "pending",
+  "blocks": [],
+  "blockedBy": []
+}

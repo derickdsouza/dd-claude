@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "generated": "2026-04-23T13:44:58Z",
+  "trigger": "milestone-edit-batch",
+  "fill_pct": 17.9,
+  "quality_score": 82.9,
+  "session_id": "6cccb0ac-5bd5-4a4e-aa5f-2421c9b66bfa",
+  "git": {
+    "branch": "fix/data-fetcher-scheduler",
+    "sha": "aef3cff7"
+  },
+  "active_task": "review each one of them with the code int he main branch",
+  "active_plan": null,
+  "todos": [],
+  "modified_files": [
+    {
+      "path": "/Users/derickdsouza/Projects/development/portfolio-manager/scripts/setup-dev.sh",
+      "action": "modified",
+      "range": ""
+    },
+    {
+      "path": "/Users/derickdsouza/Projects/development/portfolio-manager/.github/workflows/auto-merge.yml",
+      "action": "modified",
+      "range": ""
+    },
+    {
+      "path": "/Users/derickdsouza/Projects/development/portfolio-manager/.github/workflows/direct-push-alert.yml",
+      "action": "modified",
+      "range": ""
+    },
+    {
+      "path": "/Users/derickdsouza/Projects/development/portfolio-manager/AGENTS.md",
+      "action": "modified",
+      "range": ""
+    },
+    {
+      "path": "/Users/derickdsouza/Projects/development/portfolio-manager/.beadswave/templates.lock.json",
+      "action": "modified",
+      "range": ""
+    }
+  ],
+  "recent_reads": [
+    "/Users/derickdsouza/Projects/development/portfolio-manager/.beadswave/pre-ship.sh",
+    "/Users/derickdsouza/Projects/development/portfolio-manager/CLAUDE.md",
+    "/Users/derickdsouza/Projects/development/mfcapp/.mergify.yml",
+    "/Users/derickdsouza/Projects/development/mfcapp/.claude/settings.local.json",
+    "/Users/derickdsouza/Projects/development/mfcapp/.beads/prompts/create-pr.md",
+    "/Users/derickdsouza/Projects/development/mfcapp/scripts/setup-dev.sh",
+    "/Users/derickdsouza/Projects/development/mfcapp/.github/workflows/auto-merge.yml",
+    "/Users/derickdsouza/Projects/development/mfcapp/.github/workflows/direct-push-alert.yml",
+    "/Users/derickdsouza/Projects/development/mfcapp/barts-brain.md",
+    "/Users/derickdsouza/Projects/development/mfcapp/.beadswave/templates.lock.json"
+  ],
+  "decisions": [
+    "You mentioned copying the beadswave skill files instead of editing",
+    "Now regarding your request to copy from the beadswave skill instead of editing \u2014 the skill templates are generic scaffolding",
+    "Let me verify `fix/data-fetcher-scheduler` has the working tree change but isn't showing because it's uncommitted"
+  ],
+  "open_questions": [],
+  "error_context": [],
+  "agent_state": [],
+  "continuation": "Here's the summary:\n\n| Branch | Status | Action |\n|---|---|---|\n| `experimental-holding` | 4 unique files (scripts + tests + helpers) | **Ship** |\n| `fix/data-fetcher-scheduler` | Uncommitted changes in scheduler.py + 2 new systemd units | **Commit first, then ship** |\n| `feat/auto-merge-hardening` | Empty diff \u2014 already in main | **Delete** |\n| `feat/auto-merge-system` | Empty diff \u2014 already in main | **Delete** |\n| `feat/bd-ship-pr-provenance-label` | Empty diff \u2014 already in main | **Delete** "
+}

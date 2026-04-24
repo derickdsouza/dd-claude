@@ -1,0 +1,16 @@
+[
+  {
+    "from": "on-providers",
+    "text": "{\"type\":\"task_assignment\",\"taskId\":\"3\",\"subject\":\"Phase 3: Create ON providers (on/content.py, on/extraction.py, on/search.py)\",\"description\":\"Create ON provider implementations under /Users/derickdsouza/Projects/development/reqless/backend/app/providers/on/:\\n\\n1. `__init__.py` - Empty package init\\n2. `content.py` (~180 lines) - `ONContentProvider(ContentProvider)`:\\n   Write-through: ON first → SQLite cache. Respects on_sync_sources.\\n   - `store_document()`:\\n     if on_sync_sources:\\n       1. Get/create ON notebook (by notebook_name) → raise StorageProviderError on failure\\n       2. Upload source to ON → raise StorageProviderError on failure\\n     3. Write UploadedDocument to SQLite (always - serves as cache)\\n     4. Write ONMapping to SQLite (if ON sync happened)\\n     return StoredDocument(db_id, on_source_id)\\n   - `store_fetched_urls()`: Same pattern - ON first if on_sync_sources, then SQLite\\n   - `should_generate_local_embeddings()`: returns False (ON handles via SurrealDB HNSW)\\n\\n3. `extraction.py` (~200 lines) - `ONExtractionProvider(ExtractionProvider)`:\\n   Moves code from requirements_extractor._extract_via_on() (lines 615-759), _enrich_via_on() (lines 761-858), and extraction_judge._select_best_via_on() (lines 127-224).\\n   Key difference: failures RAISE StorageProviderError instead of returning None.\\n   - `extract(session_id, messages, current_content)` → extracted dict or raises StorageProviderError\\n   - `enrich(session_id, content)` → enrichment dict or raises StorageProviderError\\n   - `judge(extraction_a, extraction_b, messages)` → tuple(merged, confidence, reasoning) or raises StorageProviderError\\n   Uses: on_client, transformation_registry, ONMapping, db engine\\n\\n4. `search.py` (~100 lines) - `ONSearchProvider(SearchProvider)`:\\n   Moves code from on_search_adapter.py. ON failure raises StorageProviderError (not empty list).\\n   - `search(query, session_id, top_k)` → list[SearchResult]\\n   - `get_context_for_query(session_id, query, max_results)` → formatted context string\\n\\nIMPORTANT: Import on_client from app.services.open_notebook_client. Import transformation_registry from app.services.on_transformation_registry. Import ONMapping, UploadedDocument, FetchedUrl, Session as ChatSession from app.models.database. Use app.db.engine. Import StorageProviderError from app.providers.exceptions. Import settings from app.config.settings for on_sync_sources checks.\",\"assignedBy\":\"on-providers\",\"timestamp\":\"2026-02-13T07:45:45.153Z\"}",
+    "timestamp": "2026-02-13T07:45:45.153Z",
+    "color": "green",
+    "read": false
+  },
+  {
+    "from": "on-providers",
+    "text": "{\"type\":\"task_assignment\",\"taskId\":\"8\",\"subject\":\"Write ON content provider\",\"description\":\"Create /Users/derickdsouza/Projects/development/reqless/backend/app/providers/on/content.py with ONContentProvider implementing write-through: ON first then SQLite cache.\",\"assignedBy\":\"on-providers\",\"timestamp\":\"2026-02-13T07:46:08.459Z\"}",
+    "timestamp": "2026-02-13T07:46:08.459Z",
+    "color": "green",
+    "read": false
+  }
+]

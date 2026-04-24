@@ -1,0 +1,9 @@
+{
+  "id": "17",
+  "subject": "Implement ko7g4 — SelectAI API key auth epic",
+  "description": "Implement all 5 sub-issues of the auth epic in dependency order: .1 → (.2, .4 parallel) → .3 → .5",
+  "activeForm": "Implementing SelectAI auth epic",
+  "status": "in_progress",
+  "blocks": [],
+  "blockedBy": []
+}

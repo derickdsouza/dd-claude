@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "generated": "2026-04-23T14:10:47Z",
+  "trigger": "stop",
+  "fill_pct": null,
+  "quality_score": null,
+  "session_id": "c6a06dd2-06cc-4aa9-8867-e015b33ebf60",
+  "git": {
+    "branch": "main",
+    "sha": "d99c3248"
+  },
+  "active_task": "# /waves \u2014 Classify, allocate, and claim a lane\n\nInspect the beads backlog, classify any un-labeled beads into `wave/lane/shape/scope`,\nallocate a free lane to this terminal, and show the drained-map. The default flow\nmakes a worker-ready; follow with `/drain` to start executing.\n\nThis command is idempotent. Running it again on an already-claimed lane just shows\nthe map; running it with a fresh terminal picks the next free lane.\n\n## Steps\n\n### 1. Verify skill + auto-adopt repo\n\n```bash\nSKILL=\"${",
+  "active_plan": null,
+  "todos": [],
+  "modified_files": [],
+  "recent_reads": [],
+  "decisions": [],
+  "open_questions": [
+    "# /waves \u2014 Classify, allocate, and claim a lane\n\nInspect the beads backlog, classify any un-labeled beads into `wave/lane/shape/scope`,\nallocate a free lane to this terminal, and show the drained-map."
+  ],
+  "error_context": [],
+  "agent_state": [],
+  "continuation": "Here's the map:\n\n```\ndrain:alpha         1 bead   wave:1 lane:A\n  gq7pp             Conveyor Belt Migration: Remove GitButler & Mergify\n\ndrain:claude-main   4 beads  wave:0 lane:A\n  3i9am.2-5         NSE holiday refresh (BullMQ jobs, fetch, config, tests)\n\nUnassigned:         8 beads  wave:9 lane:A\n  nu08v + 6 subs    Free float shares data pipeline\n  3i9am             Epic: dynamic NSE holiday refresh\n\nBranches:           0 fix/* branches (clean)\n```\n\n**You are `drain:alpha` on wave:1 lane:A**\n"
+}

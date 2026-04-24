@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "generated": "2026-04-23T14:36:12Z",
+  "trigger": "stop",
+  "fill_pct": null,
+  "quality_score": null,
+  "session_id": "16ad658f-1c64-474b-bedd-f7c4a9cd292a",
+  "git": {
+    "branch": "fix/adhoc-nu08v.1",
+    "sha": "5dffbbf8"
+  },
+  "active_task": "# Create-PR Prompt\n\nYou are creating a GitHub pull request for a shipped beads issue. Be terse,\nfactual, and deterministic.\n\n## Inputs (from environment)\n\n- `$BEAD_ID` \u2014 the beads issue ID (e.g. `portfolio-manager-xxxxx`)\n- `$BRANCH` \u2014 the branch name to PR\n- `$FORCE_HOLD` \u2014 if `\"true\"`, you MUST label the PR `auto-merge:hold` regardless of heuristics\n\n## Steps\n\n1. **Idempotency check.** Run `gh pr list --head \"$BRANCH\" --state open --json number,labels`. If a PR already exists, print `PR_NUMBER",
+  "active_plan": null,
+  "todos": [],
+  "modified_files": [],
+  "recent_reads": [],
+  "decisions": [],
+  "open_questions": [
+    "# Create-PR Prompt\n\nYou are creating a GitHub pull request for a shipped beads issue. Be terse,\nfactual, and deterministic.\n\n## Inputs (from environment)\n\n- `$BEAD_ID` \u2014 the beads issue ID (e.g. `port"
+  ],
+  "error_context": [],
+  "agent_state": [],
+  "continuation": "PR created successfully.\n\nPR_NUMBER=1553\nPR_LABEL=auto-merge"
+}
