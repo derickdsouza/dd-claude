@@ -123,6 +123,33 @@ test_pipeline_driver_skips_merge_wait_for_hold_prs() (
   assert_file_not_contains "$TRACE_FILE" "queue-hygiene-wrapper"
 )
 
+test_pipeline_driver_falls_back_to_manifest_when_labels_missing() (
+  set -euo pipefail
+  local tmp output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  setup_pipeline_driver_fixture "$tmp"
+  # Simulate label drift: bd has no stage labels, but the manifest
+  # written by a prior bd-ship run records stage:merging. Without the
+  # fallback, pipeline-driver would re-run bd-ship on an already-pushed
+  # PR — potentially double-pushing or re-opening a merged bead.
+  export BD_SHOW_JSON='[{"id":"mfcapp-123","status":"open","labels":[]}]'
+  mkdir -p "$tmp/repo/.git/beadswave-state"
+  printf '%s\n' '{"bead_id":"mfcapp-123","stage":"merging","branch":"fix/mfcapp-123","pr":321,"last_successful_step":"bd-ship-merging"}' \
+    > "$tmp/repo/.git/beadswave-state/mfcapp-123.json"
+
+  set +e
+  output="$(cd "$tmp/repo" && "$PIPELINE_DRIVER_SCRIPT" mfcapp-123 2>&1)"
+  status=$?
+  set -e
+
+  assert_eq "0" "$status" "pipeline-driver should resume from manifest when labels are missing"
+  assert_contains "$output" "current stage: stage:merging"
+  assert_file_not_contains "$TRACE_FILE" "bd-ship-wrapper"
+  assert_file_contains "$TRACE_FILE" $'merge-wait-wrapper\tmfcapp-123\t--timeout\t1800'
+)
+
 run_test "pipeline-driver retries stage:shipping before merge-wait" test_pipeline_driver_retries_shipping_stage_and_runs_cleanup
 run_test "pipeline-driver still runs cleanup for closed beads" test_pipeline_driver_runs_cleanup_for_closed_bead
 run_test "pipeline-driver skips merge-wait for hold PRs" test_pipeline_driver_skips_merge_wait_for_hold_prs
+run_test "pipeline-driver falls back to manifest when stage labels drift" test_pipeline_driver_falls_back_to_manifest_when_labels_missing

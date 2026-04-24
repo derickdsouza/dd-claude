@@ -101,6 +101,22 @@ fi
 
 LABELS=$(printf '%s' "$BEAD_JSON" | jq -r 'if type=="array" then .[0].labels else .labels end // [] | if type=="array" then .[] else . end | select(startswith("stage:"))' 2>/dev/null || true)
 CURRENT_STAGE=$(printf '%s' "$LABELS" | head -1 || true)
+
+# Fallback to the state manifest when bd labels have drifted (auto-heal
+# cleared them, manual edits lost them, etc). The manifest is the
+# authoritative record of where bd-ship / merge-wait left the bead —
+# without this, a missing stage:merging label would cause pipeline-driver
+# to re-enter bd-ship on an already-pushed PR.
+if [ -z "$CURRENT_STAGE" ]; then
+  MANIFEST_PATH="$REPO_ROOT/.git/beadswave-state/$BEAD_ID.json"
+  if [ -f "$MANIFEST_PATH" ]; then
+    MANIFEST_STAGE=$(jq -r '.stage // empty' "$MANIFEST_PATH" 2>/dev/null || true)
+    if [ -n "$MANIFEST_STAGE" ] && [ "$MANIFEST_STAGE" != "null" ]; then
+      CURRENT_STAGE="stage:$MANIFEST_STAGE"
+      echo "  Label drift detected — resuming from manifest stage ($CURRENT_STAGE)."
+    fi
+  fi
+fi
 BEAD_STATUS=$(printf '%s' "$BEAD_JSON" | jq -r 'if type=="array" then .[0].status else .status end // empty' 2>/dev/null)
 CLEANUP_ONLY=false
 
