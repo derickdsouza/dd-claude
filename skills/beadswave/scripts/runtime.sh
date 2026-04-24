@@ -673,6 +673,54 @@ beadswave_remove_worktree() {
   (cd "$repo_root" && git worktree remove "$wt" --force >/dev/null 2>&1) || true
 }
 
+beadswave_assert_branch_free_here() {
+  # Fail (return 1) if <branch> is checked out in a worktree other than the
+  # current one. Used by bd-ship before rebase and by /drain before branch
+  # creation to fail fast with a clear error instead of hitting git's cryptic
+  # "fatal: '<branch>' is already used by worktree at ..." mid-operation.
+  local repo_root="${1:-}"
+  local branch="${2:-}"
+  [[ -n "$branch" ]] || return 1
+  if [[ -z "$repo_root" ]]; then
+    repo_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+  fi
+  local here_abs
+  here_abs="$(cd "$repo_root" && pwd -P)"
+  local owner=""
+  local wt_abs=""
+  local wt_branch=""
+  # git worktree list --porcelain emits blocks of "worktree <path>\nHEAD ...\nbranch refs/heads/<name>\n\n"
+  while IFS= read -r line; do
+    case "$line" in
+      "worktree "*)
+        wt_abs="$(cd "${line#worktree }" 2>/dev/null && pwd -P)" || wt_abs="${line#worktree }"
+        wt_branch=""
+        ;;
+      "branch refs/heads/"*)
+        wt_branch="${line#branch refs/heads/}"
+        if [[ "$wt_branch" == "$branch" && "$wt_abs" != "$here_abs" ]]; then
+          owner="$wt_abs"
+          break
+        fi
+        ;;
+      "")
+        wt_abs=""
+        wt_branch=""
+        ;;
+    esac
+  done < <(cd "$repo_root" && git worktree list --porcelain 2>/dev/null)
+
+  if [[ -n "$owner" ]]; then
+    echo "✗ Branch '$branch' is already checked out in worktree: $owner" >&2
+    echo "  Resolve by one of:" >&2
+    echo "    - ship from that worktree instead: cd $owner" >&2
+    echo "    - free the branch there: (cd $owner && git switch --detach)" >&2
+    echo "    - remove that worktree if stale: git worktree remove --force $owner" >&2
+    return 1
+  fi
+  return 0
+}
+
 beadswave_fetch_origin_main() {
   local repo_root="${1:-}"
   if [[ -z "$repo_root" ]]; then

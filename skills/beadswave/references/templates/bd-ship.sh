@@ -279,6 +279,15 @@ rebase_on_main() {
   fi
   echo "  Branch is $behind commit(s) behind origin/main — rebasing..."
 
+  # Fail fast if $BRANCH is checked out in a sibling worktree — otherwise
+  # `git rebase origin/main "$BRANCH"` would emit a cryptic
+  # "fatal: '$BRANCH' is already used by worktree at ..." deep in the rebase.
+  if ! beadswave_assert_branch_free_here "$REPO_ROOT" "$BRANCH"; then
+    rm -f "$rebase_log"
+    echo "✗ Cannot rebase '$BRANCH' — owned by another worktree. Not shipping." >&2
+    exit 23
+  fi
+
   beadswave_clear_git_locks "$REPO_ROOT"
 
   # Preserve .beads/ across the rebase — rebasing commits that touch

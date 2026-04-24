@@ -83,7 +83,10 @@ before their code actually reaches main.
 - Push failure → exit 3
 - PR creation failure → exit 4
 - Merge conflict during merge-wait → exit 22
+- Worktree branch collision → exit 23 (the feature branch is checked out in a sibling worktree; bd-ship refuses to rebase rather than emit git's cryptic "fatal: '<branch>' is already used" mid-rebase)
 - Merge timeout → exit 2, bead stays at `stage:merging`
+
+**Never local-merge onto `main`.** The skill deliberately avoids `git checkout main` / `git merge origin/main` / `git pull origin main` at every layer — these operations fail unpredictably when `main` is already checked out by the primary worktree (multi-agent setups). Merge verification is advisory: `merge-wait` uses `git merge-base --is-ancestor` against `origin/main` only. Project-local pre-ship hooks (`.beadswave/pre-ship.sh`) must follow the same rule — fetch, don't checkout.
 
 No `--skip-*` flags. The only path to `stage:landed` is through every
 stage green.

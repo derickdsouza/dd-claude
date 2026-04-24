@@ -253,6 +253,60 @@ test_request_pr_auto_merge_retries_methods() (
   assert_order "$TRACE_FILE" $'gh\tpr\tmerge\t321\t--squash\t--auto\t--delete-branch' $'gh\tpr\tmerge\t321\t--merge\t--auto\t--delete-branch' "merge helper should retry with the next method"
 )
 
+test_assert_branch_free_here_ok_when_branch_unused() (
+  set -euo pipefail
+  local tmp
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  create_basic_repo "$tmp/repo"
+  (
+    cd "$tmp/repo"
+    git -c user.email=t@t -c user.name=t commit --allow-empty -q -m init
+    git branch feature
+  )
+  # shellcheck disable=SC1090
+  . "$RUNTIME_SCRIPT"
+  (cd "$tmp/repo" && beadswave_assert_branch_free_here "$tmp/repo" feature)
+)
+
+test_assert_branch_free_here_ok_when_current_worktree_owns_branch() (
+  set -euo pipefail
+  local tmp
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  create_basic_repo "$tmp/repo"
+  (
+    cd "$tmp/repo"
+    git -c user.email=t@t -c user.name=t commit --allow-empty -q -m init
+    git checkout -q -b feature
+  )
+  # shellcheck disable=SC1090
+  . "$RUNTIME_SCRIPT"
+  (cd "$tmp/repo" && beadswave_assert_branch_free_here "$tmp/repo" feature)
+)
+
+test_assert_branch_free_here_fails_when_branch_in_other_worktree() (
+  set -euo pipefail
+  local tmp output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  create_basic_repo "$tmp/repo"
+  (
+    cd "$tmp/repo"
+    git -c user.email=t@t -c user.name=t commit --allow-empty -q -m init
+    git worktree add -q "$tmp/alt" -b feature >/dev/null 2>&1
+  )
+  # shellcheck disable=SC1090
+  . "$RUNTIME_SCRIPT"
+  set +e
+  output="$(cd "$tmp/repo" && beadswave_assert_branch_free_here "$tmp/repo" feature 2>&1)"
+  status=$?
+  set -e
+  assert_eq "1" "$status" "should fail when branch is checked out in another worktree"
+  assert_contains "$output" "$tmp/alt"
+  assert_contains "$output" "feature"
+)
+
 run_test "runtime session key prefers explicit agent slot" test_session_key_prefers_explicit_agent_slot
 run_test "runtime session key falls back to tty" test_session_key_falls_back_to_tty
 run_test "runtime resolves repo-local bd-ship first" test_resolve_bd_ship_prefers_repo_wrapper
@@ -267,3 +321,6 @@ run_test "runtime lock helpers use lock directories" test_lock_helpers_use_lock_
 run_test "runtime derives project prefix from bead ids" test_project_prefix_prefers_bd_issue_prefix
 run_test "runtime expands short bead ids" test_expand_bead_id_qualifies_short_ids
 run_test "runtime retries GitHub auto-merge methods" test_request_pr_auto_merge_retries_methods
+run_test "runtime asserts branch free when unused" test_assert_branch_free_here_ok_when_branch_unused
+run_test "runtime asserts branch free when current worktree owns it" test_assert_branch_free_here_ok_when_current_worktree_owns_branch
+run_test "runtime asserts branch collision when other worktree owns it" test_assert_branch_free_here_fails_when_branch_in_other_worktree

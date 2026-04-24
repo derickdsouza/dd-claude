@@ -24,6 +24,10 @@ setup_bd_ship_fixture() {
   export PRESHIP_ISOLATE=0
   export MERGIFY_QUEUE_TIMEOUT_SECONDS=0
   export GH_PR_VIEW_MODE=auto
+  # Fixture beads have no scope: label; skip the scope gate so the test
+  # exercising the gate under test (not the scope gate) runs to completion.
+  export BEADSWAVE_SKIP_SCOPE_CHECK=1
+  export BEADSWAVE_SKIP_FAILURE_BUDGET=1
 }
 
 test_gate_failure_creates_current_preship_subissue() (
@@ -98,7 +102,8 @@ test_hold_pr_reports_human_review_message() (
   set -e
 
   assert_eq "0" "$status" "hold PRs should still ship successfully"
-  assert_contains "$output" "PR is held for human review. Remove auto-merge:hold to queue it."
+  assert_contains "$output" "PR is held for human review"
+  assert_contains "$output" "Approve the PR to trigger merge"
   assert_contains "$output" "Leaving bead open at stage:merging until PR #321 is actually merged."
   assert_file_not_contains "$TRACE_FILE" $'gh\tpr\tmerge'
   assert_file_not_contains "$TRACE_FILE" $'bd\tclose\tmfcapp-123'
@@ -197,6 +202,37 @@ test_short_bead_id_resolves_to_project_prefix() (
   assert_file_contains "$TRACE_FILE" $'bd\tclose\tportfolio-manager-oivqp.1'
 )
 
+test_rebase_aborts_when_branch_checked_out_in_sibling_worktree() (
+  set -euo pipefail
+  local tmp output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  setup_bd_ship_fixture "$tmp"
+  export BD_SHOW_JSON='[{"id":"mfcapp-123","status":"in_progress"}]'
+  # Force a behind-origin state so the rebase branch actually runs.
+  (
+    cd "$tmp/repo"
+    git -c user.name=T -c user.email=t@t commit -q --allow-empty -m "advance main"
+    git push -q origin main
+    git reset -q --hard HEAD^
+    git checkout -q fix/mfcapp-123
+    git -c user.name=T -c user.email=t@t commit -q --allow-empty -m "bead work"
+    git checkout -q main
+    # Sibling worktree now owns fix/mfcapp-123.
+    git worktree add -q "$tmp/sibling" fix/mfcapp-123 >/dev/null 2>&1
+  )
+
+  set +e
+  output="$(cd "$tmp/repo" && "$BD_SHIP_SCRIPT" mfcapp-123 --branch fix/mfcapp-123 2>&1)"
+  status=$?
+  set -e
+
+  assert_eq "23" "$status" "worktree collision should exit 23"
+  assert_contains "$output" "already checked out in worktree"
+  assert_contains "$output" "$tmp/sibling"
+  assert_file_not_contains "$TRACE_FILE" $'bd\tcreate\t--parent\tmfcapp-123'
+)
+
 run_test "bd-ship creates current preship sub-issue" test_gate_failure_creates_current_preship_subissue
 run_test "bd-ship happy path uses repo test script and closes after merge" test_happy_path_uses_repo_test_script_and_closes_after_merge
 run_test "bd-ship reports hold PRs as waiting on human review" test_hold_pr_reports_human_review_message
@@ -204,3 +240,4 @@ run_test "bd-ship keeps bead open when merge handoff fails" test_merge_handoff_f
 run_test "bd-ship rejects support/session file diffs by default" test_rejects_support_file_diff_by_default
 run_test "bd-ship leaves bead open when PR creation fails" test_pr_creation_failure_never_closes_bead
 run_test "bd-ship resolves short bead ids before shipping" test_short_bead_id_resolves_to_project_prefix
+run_test "bd-ship aborts when feature branch is in a sibling worktree" test_rebase_aborts_when_branch_checked_out_in_sibling_worktree
