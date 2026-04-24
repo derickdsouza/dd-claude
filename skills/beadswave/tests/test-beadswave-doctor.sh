@@ -92,4 +92,27 @@ test_doctor_flags_beads_with_stage_label_but_no_manifest() (
 
 run_test "beadswave doctor repairs merged PRs whose beads stayed open" test_doctor_repairs_merged_pr_open_bead
 run_test "beadswave doctor reports missing manifests for targeted beads" test_doctor_reports_missing_manifest_for_target_bead
+test_doctor_fix_clears_orphan_stage_label_when_no_pr_link() (
+  set -euo pipefail
+  local tmp output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  setup_doctor_fixture "$tmp"
+  # Bead has stage:merging but no manifest AND no external-ref — the label
+  # is dead metadata from a crashed ship that got nowhere near creating a
+  # PR. Safe to auto-remove under --fix.
+  export BD_LIST_JSON='[{"id":"mfcapp-dead","status":"in_progress","external_refs":[],"labels":["stage:merging"]}]'
+
+  set +e
+  output="$(cd "$tmp/repo" && "$DOCTOR_SCRIPT" --fix --json 2>&1)"
+  status=$?
+  set -e
+
+  assert_eq "0" "$status" "doctor --fix should succeed while healing orphan labels"
+  assert_contains "$output" '"kind": "orphan-stage-label"'
+  assert_contains "$output" '"auto_fixed": true'
+  assert_file_contains "$TRACE_FILE" $'bd\tupdate\tmfcapp-dead\t--remove-label\tstage:merging'
+)
+
 run_test "beadswave doctor flags stage-labeled beads missing their manifest" test_doctor_flags_beads_with_stage_label_but_no_manifest
+run_test "beadswave doctor --fix clears orphan stage labels with no PR link" test_doctor_fix_clears_orphan_stage_label_when_no_pr_link

@@ -444,4 +444,27 @@ test_manifest_update_under_lock_serializes_concurrent_writers() (
 )
 
 run_test "runtime reports 0 commits behind when drain branch is missing" test_worktree_commits_behind_missing_branch_returns_zero
+test_manifest_update_steals_stale_lock() (
+  set -euo pipefail
+  local tmp stage lock
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  create_basic_repo "$tmp/repo"
+  mkdir -p "$tmp/repo/.git/beadswave-state" "$tmp/repo/.beads"
+  printf '%s\n' '{"bead_id":"mfcapp-orphan","stage":"shipping"}' > "$tmp/repo/.git/beadswave-state/mfcapp-orphan.json"
+  # Simulate a crashed process that left the lockdir behind with an old mtime.
+  lock="$tmp/repo/.beads/.manifest-mfcapp-orphan.lockdir"
+  mkdir "$lock"
+  touch -t 200001010000 "$lock"
+  # shellcheck disable=SC1090
+  . "$RUNTIME_SCRIPT"
+
+  BEADSWAVE_MANIFEST_LOCK_STALE_SECS=60 beadswave_update_manifest_locked \
+    "$tmp/repo" "mfcapp-orphan" '.stage = "landed"' || fail "update should succeed by stealing stale lock"
+  stage="$(jq -r '.stage' "$tmp/repo/.git/beadswave-state/mfcapp-orphan.json")"
+  assert_eq "landed" "$stage" "stale-lock steal should let the update complete"
+  [[ ! -d "$lock" ]] || fail "lock should be released after stealing"
+)
+
 run_test "runtime serializes concurrent manifest updates under per-bead lock" test_manifest_update_under_lock_serializes_concurrent_writers
+run_test "runtime steals stale manifest locks left by crashed writers" test_manifest_update_steals_stale_lock

@@ -698,8 +698,23 @@ beadswave_update_manifest_locked() {
   mkdir -p "$(dirname "$lock_dir")" 2>/dev/null || true
   # Bounded retry: 200 tries * 50ms = 10s max wait. Long enough for any
   # realistic contention window, short enough to fail loud instead of hang.
+  # If the lockdir persists past BEADSWAVE_MANIFEST_LOCK_STALE_SECS
+  # (default 300s = 5min), assume the owning process crashed and steal
+  # it. A legitimate RMW completes in milliseconds, so 5min is safely past
+  # any real contention.
   local attempts=0
+  local stale_secs="${BEADSWAVE_MANIFEST_LOCK_STALE_SECS:-300}"
   while ! mkdir "$lock_dir" 2>/dev/null; do
+    if [[ -d "$lock_dir" ]]; then
+      local lock_age now mtime
+      now="$(date +%s)"
+      mtime="$(stat -f %m "$lock_dir" 2>/dev/null || stat -c %Y "$lock_dir" 2>/dev/null || echo "$now")"
+      lock_age=$((now - mtime))
+      if [[ "$lock_age" -ge "$stale_secs" ]]; then
+        rmdir "$lock_dir" 2>/dev/null || true
+        continue
+      fi
+    fi
     attempts=$((attempts + 1))
     if [[ $attempts -ge 200 ]]; then
       return 1

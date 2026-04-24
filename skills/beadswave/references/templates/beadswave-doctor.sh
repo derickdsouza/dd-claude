@@ -356,6 +356,9 @@ done
 # to fall back to. Only meaningful on a full sweep (no explicit targets).
 if [[ "${#TARGET_BEADS[@]}" -eq 0 ]]; then
   ORPHAN_JSON="$(bd list --status=in_progress --json -n 0 2>/dev/null || echo '[]')"
+  # First pass: emit machine-readable orphan candidates so the shell can
+  # attempt safe fixes. Each line is TSV: bead_id<TAB>stage_label<TAB>has_ref
+  ORPHAN_CANDIDATES="$(beadswave_tmpfile beadswave-doctor-orphans)"
   printf '%s' "$ORPHAN_JSON" | BEADSWAVE_STATE_DIR="$STATE_DIR" python3 -c '
 import json, os, sys
 state_dir = os.environ["BEADSWAVE_STATE_DIR"]
@@ -375,29 +378,28 @@ for b in beads:
     manifest = os.path.join(state_dir, f"{bid}.json")
     if os.path.isfile(manifest):
         continue
-    print(json.dumps({
-        "bead_id": bid,
-        "kind": "orphan-stage-label",
-        "severity": "warning",
-        "detail": f"Bead carries {stage_labels[0]} but has no manifest on disk.",
-        "fixable": False,
-        "meta": {"stage_label": stage_labels[0]},
-    }))
-' >> "$FINDINGS_FILE"
-  # Mirror orphan findings to stdout when not in --json mode so the human
-  # summary includes them.
-  if [[ "$JSON_OUTPUT" != "true" ]]; then
-    grep -F '"orphan-stage-label"' "$FINDINGS_FILE" 2>/dev/null \
-      | python3 -c "
-import json, sys
-for line in sys.stdin:
-    line = line.strip()
-    if not line: continue
-    try: d = json.loads(line)
-    except: continue
-    print(f\"[{d['severity']}] {d['bead_id']} {d['kind']}: {d['detail']}\")
-" || true
-  fi
+    refs = b.get("external_refs") or []
+    has_ref = "1" if any((r if isinstance(r, str) else r.get("ref","")) for r in refs) else "0"
+    print(f"{bid}\t{stage_labels[0]}\t{has_ref}")
+' > "$ORPHAN_CANDIDATES"
+
+  while IFS=$'\t' read -r orphan_bead orphan_label orphan_has_ref; do
+    [[ -n "$orphan_bead" ]] || continue
+    orphan_fixed=false
+    # Safe auto-fix: bead has no external-ref AND no manifest. The label
+    # is dead metadata from a crashed ship that never reached PR creation.
+    # Never touch beads that DO have a PR ref — those need human eyes.
+    if [[ "$FIX_MODE" == "true" && "$orphan_has_ref" == "0" ]]; then
+      if bd update "$orphan_bead" --remove-label "$orphan_label" >/dev/null 2>&1; then
+        orphan_fixed=true
+      fi
+    fi
+    emit_finding "$orphan_bead" "orphan-stage-label" "warning" \
+      "Bead carries $orphan_label but has no manifest on disk." \
+      true \
+      "$(jq -nc --arg stage_label "$orphan_label" --argjson auto_fixed "$orphan_fixed" '{stage_label:$stage_label, auto_fixed:$auto_fixed}')"
+  done < "$ORPHAN_CANDIDATES"
+  rm -f "$ORPHAN_CANDIDATES"
 fi
 
 if [[ "$JSON_OUTPUT" == "true" ]]; then
