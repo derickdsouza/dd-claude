@@ -120,7 +120,38 @@ test_queue_hygiene_respects_block_mode_for_stale_shipping() (
   assert_file_not_contains "$TRACE_FILE" $'bd\tupdate\tmfcapp-stale\t--remove-label\tstage:shipping'
 )
 
+test_queue_hygiene_gcs_closed_bead_manifests() (
+  set -euo pipefail
+  local tmp output status closed_manifest open_manifest
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  setup_queue_hygiene_fixture "$tmp"
+  # Two manifests: one for an open bead (keep), one for a closed bead
+  # whose file is older than the GC window (delete).
+  mkdir -p "$tmp/repo/.git/beadswave-state"
+  closed_manifest="$tmp/repo/.git/beadswave-state/mfcapp-closed.json"
+  open_manifest="$tmp/repo/.git/beadswave-state/mfcapp-open.json"
+  printf '%s\n' '{"bead_id":"mfcapp-closed","stage":"landed"}' > "$closed_manifest"
+  printf '%s\n' '{"bead_id":"mfcapp-open","stage":"merging"}' > "$open_manifest"
+  # Backdate the closed manifest beyond the 7-day default window
+  touch -t 202001010000 "$closed_manifest"
+  # GC queries `bd list --status=closed`; return mfcapp-closed so the
+  # manifest sweep knows which files are safe to remove.
+  export BD_LIST_JSON='[{"id":"mfcapp-closed","status":"closed"}]'
+
+  set +e
+  output="$(cd "$tmp/repo" && "$QUEUE_HYGIENE_SCRIPT" --phase preflight 2>&1)"
+  status=$?
+  set -e
+
+  assert_eq "0" "$status" "queue-hygiene should succeed while GC'ing stale manifests"
+  assert_contains "$output" "garbage-collected 1 stale manifest"
+  [ ! -f "$closed_manifest" ] || fail "closed bead manifest should have been removed"
+  [ -f "$open_manifest" ] || fail "open bead manifest should have been preserved"
+)
+
 run_test "queue-hygiene runs prune and monitor passes" test_queue_hygiene_runs_prune_and_monitor
+run_test "queue-hygiene garbage-collects manifests for old closed beads" test_queue_hygiene_gcs_closed_bead_manifests
 run_test "queue-hygiene fails closed on dirty tracked changes" test_queue_hygiene_fails_closed_on_dirty_tracked_changes
 run_test "queue-hygiene auto-heals stale stage:shipping labels" test_queue_hygiene_auto_heals_stale_shipping_labels
 run_test "queue-hygiene respects block mode for stale stage:shipping" test_queue_hygiene_respects_block_mode_for_stale_shipping

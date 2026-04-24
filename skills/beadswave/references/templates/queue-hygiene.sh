@@ -191,4 +191,35 @@ if [ "$RUN_MONITOR" = "1" ]; then
   fi
 fi
 
+# ── Manifest garbage collection ─────────────────────────────────────────
+# Sweep .git/beadswave-state/*.json for closed beads whose manifest file
+# is older than BEADSWAVE_MANIFEST_GC_DAYS (default 7). Keeps the state
+# directory bounded over hundreds of ships. Open/in-progress beads are
+# never touched regardless of mtime — the manifest is still authoritative
+# for pipeline-driver recovery.
+MANIFEST_DIR="$REPO_ROOT/.git/beadswave-state"
+if [ -d "$MANIFEST_DIR" ]; then
+  GC_DAYS="${BEADSWAVE_MANIFEST_GC_DAYS:-7}"
+  CLOSED_IDS_FILE="$(mktemp)"
+  bd list --status=closed --json -n 0 2>/dev/null \
+    | jq -r '(if type=="array" then . else [.] end)[] | .id' \
+    > "$CLOSED_IDS_FILE" 2>/dev/null || true
+  REMOVED=0
+  while IFS= read -r closed_id; do
+    [ -n "$closed_id" ] || continue
+    manifest="$MANIFEST_DIR/$closed_id.json"
+    [ -f "$manifest" ] || continue
+    # Only GC files older than the window — recently-landed beads keep
+    # their manifests around long enough for the doctor to reconcile.
+    if find "$manifest" -mtime +"$GC_DAYS" -print 2>/dev/null | grep -q .; then
+      rm -f "$manifest"
+      REMOVED=$((REMOVED + 1))
+    fi
+  done < "$CLOSED_IDS_FILE"
+  rm -f "$CLOSED_IDS_FILE"
+  if [ "$REMOVED" -gt 0 ]; then
+    say "garbage-collected $REMOVED stale manifest(s) for closed beads"
+  fi
+fi
+
 exit 0
