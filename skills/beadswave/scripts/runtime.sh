@@ -678,6 +678,30 @@ beadswave_ensure_worktree() {
   printf '%s\n' "$wt"
 }
 
+beadswave_worktree_commits_behind() {
+  # Report how many commits the agent's drain/<agent> branch is behind origin/main.
+  # Used by /waves and /drain to warn before handing work to a stale worktree —
+  # rebasing N beads on top of an N00-commit-behind branch is where the worst
+  # "conflict avalanches" in the log archive came from. Returns 0 if the
+  # branch or upstream is missing (nothing to warn about yet).
+  local repo_root="${1:-}"
+  local agent="${2:-}"
+  [[ -n "$agent" ]] || { printf '0\n'; return 0; }
+  if [[ -z "$repo_root" ]]; then
+    repo_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+  fi
+  local branch="drain/$agent"
+  if ! (cd "$repo_root" && git show-ref --verify --quiet "refs/heads/$branch"); then
+    printf '0\n'; return 0
+  fi
+  if ! (cd "$repo_root" && git rev-parse --verify --quiet origin/main >/dev/null); then
+    printf '0\n'; return 0
+  fi
+  local behind
+  behind="$(cd "$repo_root" && git rev-list --count "$branch..origin/main" 2>/dev/null || echo 0)"
+  printf '%s\n' "${behind:-0}"
+}
+
 beadswave_remove_worktree() {
   local repo_root="${1:-}"
   local agent="${2:-}"

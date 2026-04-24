@@ -373,4 +373,46 @@ run_test "runtime dirty-paths excludes system-owned lock files" test_dirty_paths
 run_test "runtime dirty-paths reports real user changes" test_dirty_paths_still_reports_real_user_changes
 run_test "runtime asserts branch free when unused" test_assert_branch_free_here_ok_when_branch_unused
 run_test "runtime asserts branch free when current worktree owns it" test_assert_branch_free_here_ok_when_current_worktree_owns_branch
+test_worktree_commits_behind_reports_drift() (
+  set -euo pipefail
+  local tmp behind
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  git init -q --bare "$tmp/remote.git"
+  create_basic_repo "$tmp/repo"
+  (
+    cd "$tmp/repo"
+    git -c user.email=t@t -c user.name=t commit --allow-empty -q -m init
+    git remote add origin "$tmp/remote.git"
+    git push -q -u origin main
+    # drain branch starts at the shared base commit
+    git branch drain/alpha main
+    # origin/main advances by 3 commits ahead of drain/alpha
+    git -c user.email=t@t -c user.name=t commit --allow-empty -q -m ahead1
+    git -c user.email=t@t -c user.name=t commit --allow-empty -q -m ahead2
+    git -c user.email=t@t -c user.name=t commit --allow-empty -q -m ahead3
+    git push -q origin main
+    git fetch -q origin
+  )
+  # shellcheck disable=SC1090
+  . "$RUNTIME_SCRIPT"
+  behind="$(beadswave_worktree_commits_behind "$tmp/repo" alpha)"
+  assert_eq "3" "$behind" "drain/alpha should report 3 commits behind origin/main"
+)
+
+test_worktree_commits_behind_missing_branch_returns_zero() (
+  set -euo pipefail
+  local tmp behind
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  create_basic_repo "$tmp/repo"
+  (cd "$tmp/repo" && git -c user.email=t@t -c user.name=t commit --allow-empty -q -m init)
+  # shellcheck disable=SC1090
+  . "$RUNTIME_SCRIPT"
+  behind="$(beadswave_worktree_commits_behind "$tmp/repo" ghost)"
+  assert_eq "0" "$behind" "missing drain branch should report 0 (nothing to rebase)"
+)
+
 run_test "runtime asserts branch collision when other worktree owns it" test_assert_branch_free_here_fails_when_branch_in_other_worktree
+run_test "runtime reports drain-branch commits behind origin/main" test_worktree_commits_behind_reports_drift
+run_test "runtime reports 0 commits behind when drain branch is missing" test_worktree_commits_behind_missing_branch_returns_zero
