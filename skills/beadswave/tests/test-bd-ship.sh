@@ -276,6 +276,37 @@ test_rebase_conflict_clears_stage_shipping_label() (
   assert_file_not_contains "$TRACE_FILE" $'bd\tclose\tmfcapp-123'
 )
 
+test_flaky_test_gate_retries_then_passes() (
+  set -euo pipefail
+  local tmp output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  setup_bd_ship_fixture "$tmp"
+  export BD_SHOW_JSON='[{"id":"mfcapp-123","status":"in_progress"}]'
+  export CLAUDE_MODE=success
+  export CLAUDE_PR_NUMBER=321
+  export CLAUDE_PR_LABEL=auto-merge
+  export GH_PR_VIEW_MODE=merged
+
+  # Flaky test command: fails on the first run, passes on the second.
+  local counter="$tmp/flake-count"
+  printf '0' > "$counter"
+  local flaky_cmd='c=$(cat '"$counter"' 2>/dev/null || echo 0); c=$((c+1)); printf "%s" "$c" > '"$counter"'; if [ "$c" -lt 2 ]; then echo "flake on attempt $c" >&2; exit 1; fi; echo "green on attempt $c"; exit 0'
+
+  set +e
+  output="$(cd "$tmp/repo" && LINT_CMD='true' TYPECHECK_CMD='true' TEST_CMD="$flaky_cmd" BEADSWAVE_GATE_RETRIES=1 "$BD_SHIP_SCRIPT" mfcapp-123 --branch fix/mfcapp-123 2>&1)"
+  status=$?
+  set -e
+
+  assert_eq "0" "$status" "flaky test should pass after retry and ship succeeds"
+  assert_contains "$output" "Retrying tests gate (attempt 2/2"
+  assert_contains "$output" "tests passed"
+  # The counter file proves exactly two attempts ran.
+  assert_eq "2" "$(cat "$counter")" "flaky test gate should run exactly twice (one retry)"
+  # No preship-fail sub-issue should be filed for a flake.
+  assert_file_not_contains "$TRACE_FILE" $'\t--labels\tpreship-fail'
+)
+
 run_test "bd-ship creates current preship sub-issue" test_gate_failure_creates_current_preship_subissue
 run_test "bd-ship happy path uses repo test script and closes after merge" test_happy_path_uses_repo_test_script_and_closes_after_merge
 run_test "bd-ship reports hold PRs as waiting on human review" test_hold_pr_reports_human_review_message
@@ -285,3 +316,4 @@ run_test "bd-ship leaves bead open when PR creation fails" test_pr_creation_fail
 run_test "bd-ship resolves short bead ids before shipping" test_short_bead_id_resolves_to_project_prefix
 run_test "bd-ship aborts when feature branch is in a sibling worktree" test_rebase_aborts_when_branch_checked_out_in_sibling_worktree
 run_test "bd-ship clears stage:shipping label on rebase conflict" test_rebase_conflict_clears_stage_shipping_label
+run_test "bd-ship retries flaky test gate before filing preship-fail" test_flaky_test_gate_retries_then_passes

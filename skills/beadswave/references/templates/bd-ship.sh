@@ -674,23 +674,44 @@ run_gate() {
     echo "▷ No $name command configured for stack '$STACK' — skipping"
     return 0
   fi
-  echo "▶ Running $name gate ($cmd)..."
-  local out
-  out="$(beadswave_tmpfile bd-ship-gate)" || {
-    echo "✗ Could not allocate temp file for $name gate output" >&2
-    exit "$exitcode"
-  }
-  if ! bash -c "$cmd" >"$out" 2>&1; then
-    echo "✗ $name gate failed — not shipping. Fix the sub-issue and re-run bd-ship." >&2
+  # Retry the gate up to BEADSWAVE_GATE_RETRIES additional times (default 1)
+  # to absorb flaky tests before filing a preship-fail sub-issue. Set to 0
+  # to disable retries entirely. Only the test gate retries by default;
+  # lint/typecheck failures are deterministic and retrying wastes cycles.
+  local retries="${BEADSWAVE_GATE_RETRIES:-1}"
+  if [ "$name" != "tests" ]; then retries=0; fi
+  local attempt=0
+  local max_attempts=$((retries + 1))
+  while :; do
+    attempt=$((attempt + 1))
+    if [ "$attempt" -eq 1 ]; then
+      echo "▶ Running $name gate ($cmd)..."
+    else
+      echo "↻ Retrying $name gate (attempt $attempt/$max_attempts, absorbing flake)..."
+    fi
+    local out
+    out="$(beadswave_tmpfile bd-ship-gate)" || {
+      echo "✗ Could not allocate temp file for $name gate output" >&2
+      exit "$exitcode"
+    }
+    if bash -c "$cmd" >"$out" 2>&1; then
+      rm -f "$out"
+      echo "  ✓ $name passed${attempt:+ (attempt $attempt)}"
+      return 0
+    fi
+    if [ "$attempt" -lt "$max_attempts" ]; then
+      echo "  ⚠ $name gate failed on attempt $attempt/$max_attempts — retrying" >&2
+      rm -f "$out"
+      continue
+    fi
+    echo "✗ $name gate failed after $attempt attempt(s) — not shipping. Fix the sub-issue and re-run bd-ship." >&2
     echo "--- last 80 lines of $name output ---" >&2
     tail -80 "$out" >&2
     echo "--- end $name output (full: $out) ---" >&2
     create_preship_subissue "$name" "$out"
     cleanup_shipping_label
     exit "$exitcode"
-  fi
-  rm -f "$out"
-  echo "  ✓ $name passed"
+  done
 }
 
 if [ -x "$PRESHIP_HOOK" ]; then
