@@ -16,6 +16,7 @@ MASS_SHIP_SCRIPT="$SKILL_ROOT/references/templates/mass-ship.sh"
 QUEUE_HYGIENE_SCRIPT="$SKILL_ROOT/references/templates/queue-hygiene.sh"
 PIPELINE_DRIVER_SCRIPT="$SKILL_ROOT/references/templates/pipeline-driver.sh"
 MERGE_WAIT_SCRIPT="$SKILL_ROOT/references/templates/merge-wait.sh"
+DOCTOR_SCRIPT="$SKILL_ROOT/references/templates/beadswave-doctor.sh"
 
 fail() {
   echo "not ok - $*" >&2

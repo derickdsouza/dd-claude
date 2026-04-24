@@ -270,7 +270,7 @@ beadswave_state_dir() {
   if [[ -z "$repo_root" ]]; then
     repo_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
   fi
-  printf '%s/.beadswave/state\n' "$repo_root"
+  printf '%s/.git/beadswave-state\n' "$repo_root"
 }
 
 beadswave_manifest_key() {

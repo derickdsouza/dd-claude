@@ -31,6 +31,7 @@ STUCK_MIN=120
 FILE_BEADS=false
 JSON_OUT=false
 RESOLVE_CONFLICTS=false
+SCAN_ORPHANS=false
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -39,6 +40,7 @@ while [ $# -gt 0 ]; do
     --stuck)       STUCK_MIN="$2"; shift 2 ;;
     --file-beads)  FILE_BEADS=true; shift ;;
     --resolve-conflicts) RESOLVE_CONFLICTS=true; shift ;;
+    --orphans)     SCAN_ORPHANS=true; shift ;;
     --json)              JSON_OUT=true; shift ;;
     -h|--help)     sed -n '2,/^$/p' "$0" | sed 's/^# \?//'; exit 0 ;;
     *)             echo "Unknown option: $1" >&2; exit 2 ;;
@@ -210,6 +212,39 @@ Action required: rebase the branch onto latest main and resolve conflicts."
             echo "      failed to file bead for PR #$n"
           fi
         fi
+      fi
+    done
+  fi
+fi
+
+# ──────────────────────────────────────────────────────────────
+# Orphan detection (--orphans): auto-merge labeled PRs missing handoff
+# ──────────────────────────────────────────────────────────────
+# A PR with the auto-merge label should have autoMergeRequest set. If it
+# doesn't, the handoff from bd-ship was dropped (crashed ship, GitHub API
+# hiccup, or manual label re-apply). Re-issue `gh pr merge --auto` so the
+# conveyor belt resumes moving.
+if [ "$SCAN_ORPHANS" = "true" ]; then
+  echo
+  echo "Scanning for stuck labeled PRs missing merge handoff..."
+  ORPHAN_RAW=$(gh pr list --state open --label auto-merge --json number,title,headRefName 2>/dev/null || echo '[]')
+  ORPHAN_COUNT=$(echo "$ORPHAN_RAW" | jq 'length' 2>/dev/null || echo 0)
+
+  if [ "$ORPHAN_COUNT" -eq 0 ]; then
+    echo "  No auto-merge labeled PRs found."
+  else
+    echo "$ORPHAN_RAW" | jq -c '.[]' | while read -r pr; do
+      n=$(echo "$pr" | jq -r '.number // .n')
+      view_json=$(gh pr view "$n" --json state,autoMergeRequest,mergedAt 2>/dev/null || echo '{}')
+      auto_req=$(echo "$view_json" | jq -r '.autoMergeRequest // empty')
+      state=$(echo "$view_json" | jq -r '.state // empty')
+      if [ "$state" = "MERGED" ] || [ "$state" = "CLOSED" ]; then
+        continue
+      fi
+      if [ -z "$auto_req" ] || [ "$auto_req" = "null" ]; then
+        echo "  Repairing #$n — re-enabling auto-merge handoff"
+        gh pr merge "$n" --squash --auto --delete-branch >/dev/null 2>&1 || \
+          echo "    FAIL #$n could not re-enable auto-merge (manual intervention needed)" >&2
       fi
     done
   fi
