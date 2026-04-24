@@ -762,7 +762,10 @@ CLAUDE_OUT="$(beadswave_tmpfile bd-ship-claude)" || {
   exit 4
 }
 chmod 600 "$CLAUDE_OUT"
-trap 'rm -f "$BEAD_JSON_FILE" "$CLAUDE_OUT"' EXIT
+# Preserve the stage:shipping cleanup trap installed earlier — without this,
+# a PR-creation failure (exit 4) would leave the bead stuck at stage:shipping
+# because the new trap silently replaces the old one.
+trap 'rc=$?; rm -f "$BEAD_JSON_FILE" "$CLAUDE_OUT"; [ $rc -ne 0 ] && cleanup_shipping_label; exit $rc' EXIT
 
 if command -v timeout >/dev/null 2>&1; then
   TIMEOUT_CMD="timeout 120"

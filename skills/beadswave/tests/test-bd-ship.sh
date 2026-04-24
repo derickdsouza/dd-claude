@@ -175,6 +175,9 @@ test_pr_creation_failure_never_closes_bead() (
   assert_eq "4" "$status" "missing PR metadata should fail PR creation"
   assert_contains "$output" "did not return a PR number"
   assert_file_not_contains "$TRACE_FILE" $'bd\tclose\tmfcapp-123'
+  # The post-push trap must preserve stage:shipping cleanup; without it,
+  # a PR-creation failure would orphan the bead in stage:shipping.
+  assert_file_contains "$TRACE_FILE" $'bd\tupdate\tmfcapp-123\t--remove-label\tstage:shipping'
 )
 
 test_short_bead_id_resolves_to_project_prefix() (
