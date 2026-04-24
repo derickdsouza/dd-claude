@@ -303,6 +303,19 @@ WORKTREE="$(beadswave_ensure_worktree "$REPO_ROOT" "$AGENT" "origin/main")" || {
   exit 6
 }
 echo "Worktree: $WORKTREE (branch drain/$AGENT)"
+
+# Warn if drain/<agent> is far behind origin/main — rebasing new beads on top
+# of a massively stale branch is where conflict avalanches start.
+STALE_THRESHOLD="${BEADSWAVE_WORKTREE_STALE_THRESHOLD:-20}"
+BEHIND="$(beadswave_worktree_commits_behind "$REPO_ROOT" "$AGENT" 2>/dev/null || echo 0)"
+if [ "${BEHIND:-0}" -gt 0 ]; then
+  if [ "$BEHIND" -ge "$STALE_THRESHOLD" ]; then
+    echo "  warning: drain/$AGENT is $BEHIND commits behind origin/main (threshold $STALE_THRESHOLD)." >&2
+    echo "    Rebase before draining: (cd $WORKTREE && git rebase origin/main)" >&2
+  else
+    echo "  drain/$AGENT is $BEHIND commits behind origin/main (within tolerance)."
+  fi
+fi
 ```
 
 **Notes:**
