@@ -647,11 +647,19 @@ fi
 
 echo "▶ Shipping bead $BEAD_ID on branch $BRANCH"
 
-bd update "$BEAD_ID" --add-label stage:shipping >/dev/null 2>&1 || true
-
 cleanup_shipping_label() {
   bd update "$BEAD_ID" --remove-label stage:shipping >/dev/null 2>&1 || true
 }
+
+# Guarantee stage:shipping is cleared on ANY abnormal exit below — rebase
+# conflicts (exit 21), worktree collisions (23), temp-file failures, gate
+# failures, PR creation errors, and unexpected shell errors. Successful
+# paths explicitly transition the label to stage:merging / stage:review-hold
+# before exit, so running cleanup_shipping_label again is a harmless no-op.
+# Without this, an aborted ship would orphan the bead at stage:shipping and
+# block the next /drain retry from re-entering the pipeline cleanly.
+bd update "$BEAD_ID" --add-label stage:shipping >/dev/null 2>&1 || true
+trap 'rc=$?; [ $rc -ne 0 ] && cleanup_shipping_label; exit $rc' EXIT
 
 echo "▶ Rebasing on latest origin/main..."
 rebase_on_main

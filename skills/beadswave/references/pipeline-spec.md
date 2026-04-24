@@ -131,6 +131,7 @@ The pipeline is resumable at every stage:
 |-----------|---------------|----------|
 | Agent crashed mid-TDD | `stage:branched` or none | Re-run `/bw-work <id>` — it detects existing branch |
 | Gate failed, agent fixed code | (no stage label) | Re-run `bd-ship <id>` — picks up from rebase |
+| Rebase conflict during ship (exit 21) | (no stage label; `preship-fail` sub-issue) | Resolve the conflict on the feature branch (`git rebase origin/main` manually or `git pull --rebase`), commit the fix, close the `preship-fail` sub-issue, then re-run `bd-ship <id>`. bd-ship clears `stage:shipping` automatically on exit so the next attempt starts clean. |
 | bd-ship crashed after push but before PR | `stage:shipping` | Re-run `bd-ship <id>` — detects branch already pushed |
 | Mergify slow / timeout (legacy mode) | `stage:merging` | Re-run `merge-wait.sh <id> --timeout 3600` |
 | PR has conflicts at merge | `stage:merging` | Rebase branch, re-run `bd-ship <id>` |

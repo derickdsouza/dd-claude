@@ -233,6 +233,49 @@ test_rebase_aborts_when_branch_checked_out_in_sibling_worktree() (
   assert_file_not_contains "$TRACE_FILE" $'bd\tcreate\t--parent\tmfcapp-123'
 )
 
+test_rebase_conflict_clears_stage_shipping_label() (
+  set -euo pipefail
+  local tmp output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  setup_bd_ship_fixture "$tmp"
+  export BD_SHOW_JSON='[{"id":"mfcapp-123","status":"in_progress"}]'
+
+  # Create a genuine rebase conflict: main and fix/mfcapp-123 both modify
+  # the same line of the same file, off a shared parent.
+  (
+    cd "$tmp/repo"
+    git checkout -q main
+    printf 'shared\n' > conflicted.txt
+    git add conflicted.txt
+    git -c user.name=T -c user.email=t@t commit -q -m "seed conflicted.txt"
+    git push -q origin main
+
+    git checkout -q fix/mfcapp-123
+    git reset -q --hard main
+    printf 'branch-version\n' > conflicted.txt
+    git add conflicted.txt
+    git -c user.name=T -c user.email=t@t commit -q -m "bead changes conflicted.txt"
+
+    git checkout -q main
+    printf 'main-version\n' > conflicted.txt
+    git add conflicted.txt
+    git -c user.name=T -c user.email=t@t commit -q -m "main changes conflicted.txt"
+    git push -q origin main
+  )
+
+  set +e
+  output="$(cd "$tmp/repo" && "$BD_SHIP_SCRIPT" mfcapp-123 --branch fix/mfcapp-123 2>&1)"
+  status=$?
+  set -e
+
+  assert_eq "21" "$status" "rebase conflict should exit 21"
+  assert_contains "$output" "Rebase on origin/main has conflicts"
+  assert_file_contains "$TRACE_FILE" $'bd\tupdate\tmfcapp-123\t--add-label\tstage:shipping'
+  assert_file_contains "$TRACE_FILE" $'bd\tupdate\tmfcapp-123\t--remove-label\tstage:shipping'
+  assert_file_not_contains "$TRACE_FILE" $'bd\tclose\tmfcapp-123'
+)
+
 run_test "bd-ship creates current preship sub-issue" test_gate_failure_creates_current_preship_subissue
 run_test "bd-ship happy path uses repo test script and closes after merge" test_happy_path_uses_repo_test_script_and_closes_after_merge
 run_test "bd-ship reports hold PRs as waiting on human review" test_hold_pr_reports_human_review_message
@@ -241,3 +284,4 @@ run_test "bd-ship rejects support/session file diffs by default" test_rejects_su
 run_test "bd-ship leaves bead open when PR creation fails" test_pr_creation_failure_never_closes_bead
 run_test "bd-ship resolves short bead ids before shipping" test_short_bead_id_resolves_to_project_prefix
 run_test "bd-ship aborts when feature branch is in a sibling worktree" test_rebase_aborts_when_branch_checked_out_in_sibling_worktree
+run_test "bd-ship clears stage:shipping label on rebase conflict" test_rebase_conflict_clears_stage_shipping_label
