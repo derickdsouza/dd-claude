@@ -75,5 +75,29 @@ test_merge_wait_records_timeout_in_manifest() (
   assert_file_contains "$TRACE_FILE" $'bd\tupdate\tmfcapp-123\t--add-label\tmerge-timeout'
 )
 
+test_merge_wait_flags_closed_unmerged_prs() (
+  set -euo pipefail
+  local tmp output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  setup_merge_wait_fixture "$tmp"
+  export BD_SHOW_JSON='[{"id":"mfcapp-123","status":"in_progress","external_refs":[{"ref":"gh-321"}],"labels":["stage:merging"]}]'
+  export GH_PR_VIEW_MODE=custom
+  export GH_PR_VIEW_JSON='{"state":"CLOSED","mergedAt":null,"mergeCommit":null,"autoMergeRequest":null,"statusCheckRollup":[]}'
+  write_manifest "$tmp/repo" "mfcapp-123" '{"bead_id":"mfcapp-123","stage":"merging","branch":"fix/mfcapp-123","base_sha":"abc123"}'
+
+  set +e
+  output="$(cd "$tmp/repo" && "$MERGE_WAIT_SCRIPT" mfcapp-123 --poll 1 2>&1)"
+  status=$?
+  set -e
+
+  assert_eq "3" "$status" "merge-wait should exit 3 when PR was closed without merging"
+  assert_contains "$output" "closed without merging"
+  assert_file_contains "$TRACE_FILE" $'--add-label\tpr-closed-unmerged'
+  assert_file_contains "$TRACE_FILE" $'--remove-label\tstage:merging'
+  assert_file_contains "$(manifest_path_for "$tmp/repo" "mfcapp-123")" '"last_successful_step": "merge-wait-closed-unmerged"'
+)
+
 run_test "merge-wait marks the manifest landed after merge" test_merge_wait_marks_manifest_landed_after_merge
 run_test "merge-wait records timeout state in the manifest" test_merge_wait_records_timeout_in_manifest
+run_test "merge-wait flags beads when PR is closed without merging" test_merge_wait_flags_closed_unmerged_prs
