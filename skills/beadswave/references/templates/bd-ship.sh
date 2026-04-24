@@ -40,6 +40,7 @@ LOG_FILE="${REPO_ROOT}/.beads/auto-pr.log"
 KILL_SWITCH="${REPO_ROOT}/.ship-paused"
 PROMPT_FILE="${REPO_ROOT}/.beads/prompts/create-pr.md"
 BEADSWAVE_RUNTIME="${BEADSWAVE_SKILL_DIR:-$HOME/.claude/skills/beadswave}/scripts/runtime.sh"
+BEADSWAVE_STAGE_MACHINE="${BEADSWAVE_SKILL_DIR:-$HOME/.claude/skills/beadswave}/scripts/stage_machine.sh"
 
 if [ -f "$BEADSWAVE_RUNTIME" ]; then
   # shellcheck disable=SC1090
@@ -48,6 +49,17 @@ else
   echo "beadswave runtime missing at $BEADSWAVE_RUNTIME" >&2
   exit 1
 fi
+
+if [ -f "$BEADSWAVE_STAGE_MACHINE" ]; then
+  # shellcheck disable=SC1090
+  . "$BEADSWAVE_STAGE_MACHINE"
+else
+  echo "beadswave stage_machine missing at $BEADSWAVE_STAGE_MACHINE" >&2
+  exit 1
+fi
+
+# Tell stage_machine's role-based porcelain that we're the ship path.
+export BEADSWAVE_STAGE_ROLE=ship
 
 mkdir -p "$(dirname "$LOG_FILE")"
 
@@ -648,7 +660,9 @@ fi
 echo "▶ Shipping bead $BEAD_ID on branch $BRANCH"
 
 cleanup_shipping_label() {
-  bd update "$BEAD_ID" --remove-label stage:shipping >/dev/null 2>&1 || true
+  # Roll back shipping → branched via the stage machine (MERGE_FAIL event).
+  # Illegal from non-shipping stages; swallow so cleanup is idempotent.
+  bead_rollback "$BEAD_ID" >/dev/null 2>&1 || true
 }
 
 # Write/merge a bead state manifest at .git/beadswave-state/<id>.json.
@@ -674,7 +688,8 @@ bd_ship_write_manifest() {
 # before exit, so running cleanup_shipping_label again is a harmless no-op.
 # Without this, an aborted ship would orphan the bead at stage:shipping and
 # block the next /drain retry from re-entering the pipeline cleanly.
-bd update "$BEAD_ID" --add-label stage:shipping >/dev/null 2>&1 || true
+# Enter the shipping stage via the FSM porcelain (committed/branched → shipping).
+bead_advance "$BEAD_ID" >/dev/null 2>&1 || true
 trap 'rc=$?; [ $rc -ne 0 ] && cleanup_shipping_label; exit $rc' EXIT
 
 echo "▶ Rebasing on latest origin/main..."
@@ -844,24 +859,26 @@ bd update "$BEAD_ID" \
 if ! ensure_merge_handoff; then
   echo "PR #$PR_NUMBER exists, but merge handoff was not established." >&2
   echo "Leave the bead open and repair the PR automation path before retrying." >&2
-  bd update "$BEAD_ID" --remove-label stage:shipping >/dev/null 2>&1 || true
+  bead_rollback "$BEAD_ID" >/dev/null 2>&1 || true
   exit 4
 fi
 
 if [ "${HOLD:-false}" = "true" ]; then
-  bd update "$BEAD_ID" --remove-label stage:shipping --add-label stage:review-hold >/dev/null 2>&1 || true
+  # shipping → review-hold (HOLD event); stage_machine owns label + .stage.
+  bead_divert "$BEAD_ID" >/dev/null 2>&1 || true
   bd_ship_write_manifest \
     --arg id "$BEAD_ID" \
     --arg br "$BRANCH" \
     --argjson pr "$PR_NUMBER" \
-    '. + {bead_id: $id, stage: "review-hold", branch: $br, pr: $pr, last_successful_step: "bd-ship-review-hold"}'
+    '. + {bead_id: $id, branch: $br, pr: $pr, last_successful_step: "bd-ship-review-hold"}'
 else
-  bd update "$BEAD_ID" --remove-label stage:shipping --add-label stage:merging >/dev/null 2>&1 || true
+  # shipping → merging (MERGE_OK event); stage_machine owns label + .stage.
+  bead_advance "$BEAD_ID" >/dev/null 2>&1 || true
   bd_ship_write_manifest \
     --arg id "$BEAD_ID" \
     --arg br "$BRANCH" \
     --argjson pr "$PR_NUMBER" \
-    '. + {bead_id: $id, stage: "merging", branch: $br, pr: $pr, last_successful_step: "bd-ship-merging"}'
+    '. + {bead_id: $id, branch: $br, pr: $pr, last_successful_step: "bd-ship-merging"}'
 fi
 
 CURRENT_PR_STATE="$(pr_handoff_state "$PR_NUMBER")"
