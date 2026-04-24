@@ -651,6 +651,24 @@ cleanup_shipping_label() {
   bd update "$BEAD_ID" --remove-label stage:shipping >/dev/null 2>&1 || true
 }
 
+# Write/merge a bead state manifest at .git/beadswave-state/<id>.json.
+# Each call passes jq args describing fields to set. Merge-wait consumes
+# the same file on timeout / landed transitions. Advisory state — failures
+# are swallowed so a flaky jq never breaks a ship.
+bd_ship_write_manifest() {
+  local dir="$REPO_ROOT/.git/beadswave-state"
+  local path="$dir/$BEAD_ID.json"
+  mkdir -p "$dir" 2>/dev/null || return 0
+  [ -f "$path" ] || printf '{}\n' > "$path"
+  local tmp
+  tmp="$(mktemp)" || return 0
+  if jq "$@" "$path" > "$tmp" 2>/dev/null; then
+    mv "$tmp" "$path"
+  else
+    rm -f "$tmp"
+  fi
+}
+
 # Guarantee stage:shipping is cleared on ANY abnormal exit below — rebase
 # conflicts (exit 21), worktree collisions (23), temp-file failures, gate
 # failures, PR creation errors, and unexpected shell errors. Successful
@@ -834,8 +852,18 @@ fi
 
 if [ "${HOLD:-false}" = "true" ]; then
   bd update "$BEAD_ID" --remove-label stage:shipping --add-label stage:review-hold >/dev/null 2>&1 || true
+  bd_ship_write_manifest \
+    --arg id "$BEAD_ID" \
+    --arg br "$BRANCH" \
+    --argjson pr "$PR_NUMBER" \
+    '. + {bead_id: $id, stage: "review-hold", branch: $br, pr: $pr, last_successful_step: "bd-ship-review-hold"}'
 else
   bd update "$BEAD_ID" --remove-label stage:shipping --add-label stage:merging >/dev/null 2>&1 || true
+  bd_ship_write_manifest \
+    --arg id "$BEAD_ID" \
+    --arg br "$BRANCH" \
+    --argjson pr "$PR_NUMBER" \
+    '. + {bead_id: $id, stage: "merging", branch: $br, pr: $pr, last_successful_step: "bd-ship-merging"}'
 fi
 
 CURRENT_PR_STATE="$(pr_handoff_state "$PR_NUMBER")"

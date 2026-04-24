@@ -310,6 +310,31 @@ test_flaky_test_gate_retries_then_passes() (
   assert_file_not_contains "$TRACE_FILE" $'\t--labels\tpreship-fail'
 )
 
+test_ship_writes_manifest_at_merging_handoff() (
+  set -euo pipefail
+  local tmp output status manifest
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  setup_bd_ship_fixture "$tmp"
+  export BD_SHOW_JSON='[{"id":"mfcapp-123","status":"in_progress"}]'
+  export CLAUDE_MODE=success
+  export CLAUDE_PR_NUMBER=321
+  export CLAUDE_PR_LABEL=auto-merge
+  export GH_PR_VIEW_MODE=open
+
+  set +e
+  output="$(cd "$tmp/repo" && "$BD_SHIP_SCRIPT" mfcapp-123 --branch fix/mfcapp-123 --no-close 2>&1)"
+  status=$?
+  set -e
+
+  assert_eq "0" "$status" "ship should succeed leaving bead at stage:merging"
+  manifest="$tmp/repo/.git/beadswave-state/mfcapp-123.json"
+  assert_file_contains "$manifest" '"bead_id": "mfcapp-123"'
+  assert_file_contains "$manifest" '"stage": "merging"'
+  assert_file_contains "$manifest" '"pr": 321'
+  assert_file_contains "$manifest" '"branch": "fix/mfcapp-123"'
+)
+
 run_test "bd-ship creates current preship sub-issue" test_gate_failure_creates_current_preship_subissue
 run_test "bd-ship happy path uses repo test script and closes after merge" test_happy_path_uses_repo_test_script_and_closes_after_merge
 run_test "bd-ship reports hold PRs as waiting on human review" test_hold_pr_reports_human_review_message
@@ -320,3 +345,4 @@ run_test "bd-ship resolves short bead ids before shipping" test_short_bead_id_re
 run_test "bd-ship aborts when feature branch is in a sibling worktree" test_rebase_aborts_when_branch_checked_out_in_sibling_worktree
 run_test "bd-ship clears stage:shipping label on rebase conflict" test_rebase_conflict_clears_stage_shipping_label
 run_test "bd-ship retries flaky test gate before filing preship-fail" test_flaky_test_gate_retries_then_passes
+run_test "bd-ship writes state manifest at stage:merging handoff" test_ship_writes_manifest_at_merging_handoff
