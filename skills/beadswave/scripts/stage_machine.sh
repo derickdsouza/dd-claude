@@ -57,11 +57,30 @@ bead_current() {
 _sm_now() { eval "$BW_NOW"; }
 
 _sm_write_manifest() {
-  local bead="$1" stage="$2" ts
+  local bead="$1" stage="$2" ts path
   ts="$(_sm_now)"
   mkdir -p "$BW_STATE_DIR"
-  printf '{"bead":"%s","stage":"%s","updated_at":"%s"}\n' \
-    "$bead" "$stage" "$ts" > "$BW_STATE_DIR/${bead}.json"
+  path="$BW_STATE_DIR/${bead}.json"
+  # Merge into any pre-existing manifest so we don't clobber fields owned
+  # by other writers (bd-ship: branch/pr, merge-wait: base_sha/merge_commit).
+  if [ -f "$path" ]; then
+    BW_BEAD="$bead" BW_STAGE="$stage" BW_TS="$ts" BW_PATH="$path" python3 -c '
+import json, os, sys
+p = os.environ["BW_PATH"]
+try:
+    d = json.load(open(p))
+    if not isinstance(d, dict): d = {}
+except Exception:
+    d = {}
+d["bead"]       = os.environ["BW_BEAD"]
+d["stage"]      = os.environ["BW_STAGE"]
+d["updated_at"] = os.environ["BW_TS"]
+print(json.dumps(d))
+' > "$path.tmp" 2>/dev/null && mv "$path.tmp" "$path"
+  else
+    printf '{"bead":"%s","stage":"%s","updated_at":"%s"}\n' \
+      "$bead" "$stage" "$ts" > "$path"
+  fi
 }
 
 _sm_set_label() {

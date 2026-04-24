@@ -235,6 +235,28 @@ test_bead_intent_replay_no_pending_is_noop() (
   assert_eq "branched" "$(bead_current bd-10)" "replay must not regress stage"
 )
 
+test_bead_transition_preserves_foreign_manifest_fields() (
+  set -euo pipefail
+  eval "$(_sm_sandbox)"
+  # shellcheck disable=SC1090
+  . "$SM"
+
+  # A previous writer (bd-ship / merge-wait) already recorded branch/pr on
+  # the manifest. bead_transition should rewrite stage without clobbering
+  # those foreign fields.
+  mkdir -p "$BW_STATE_DIR"
+  printf '{"bead":"bd-20","stage":"shipping","branch":"fix/bd-20","pr":42}' \
+    > "$BW_STATE_DIR/bd-20.json"
+  printf 'shipping' > "$LABELS/bd-20"
+
+  bead_transition bd-20 MERGE_OK
+
+  assert_file_contains "$BW_STATE_DIR/bd-20.json" '"stage"'
+  assert_file_contains "$BW_STATE_DIR/bd-20.json" '"branch"'
+  assert_file_contains "$BW_STATE_DIR/bd-20.json" '"pr"'
+  assert_file_contains "$BW_STATE_DIR/bd-20.json" 'merging'
+)
+
 test_bead_intent_replay_resumes_after_crash_between_manifest_and_label() (
   set -euo pipefail
   eval "$(_sm_sandbox)"
@@ -256,5 +278,6 @@ test_bead_intent_replay_resumes_after_crash_between_manifest_and_label() (
 )
 
 run_test "bead_rollback from shipping → branched"       test_bead_rollback_from_shipping_goes_to_branched
+run_test "bead_transition preserves foreign manifest fields" test_bead_transition_preserves_foreign_manifest_fields
 run_test "bead_intent_replay no-op when already DONE"   test_bead_intent_replay_no_pending_is_noop
 run_test "bead_intent_replay resumes crashed transition" test_bead_intent_replay_resumes_after_crash_between_manifest_and_label
