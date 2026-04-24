@@ -81,6 +81,23 @@ if [ -z "$BEAD_ID" ]; then
   exit 1
 fi
 
+# Update a bead's state manifest at .git/beadswave-state/<id>.json.
+# Usage: update_manifest <bead_id> <jq-filter>
+# Silent no-op if the manifest is missing or jq fails — this is advisory
+# state, not load-bearing.
+update_manifest() {
+  local bead_id="$1"; shift
+  local path="$REPO_ROOT/.git/beadswave-state/$bead_id.json"
+  [ -f "$path" ] || return 0
+  local tmp
+  tmp="$(mktemp)" || return 0
+  if jq "$@" "$path" > "$tmp" 2>/dev/null; then
+    mv "$tmp" "$path"
+  else
+    rm -f "$tmp"
+  fi
+}
+
 RAW_BEAD_ID="$BEAD_ID"
 if expanded_bead_id="$(beadswave_expand_bead_id "$BEAD_ID" "$REPO_ROOT" 2>/dev/null || true)"; then
   if [ -n "$expanded_bead_id" ]; then
@@ -123,6 +140,11 @@ while true; do
   if [ "$ELAPSED" -ge "$TIMEOUT" ]; then
     echo "Timeout after ${TIMEOUT}s — PR #$PR_NUMBER is still not merged." >&2
     echo "  Re-run merge-wait.sh with a longer timeout, or check PR status manually." >&2
+    # Tag the bead so `bd list --label merge-timeout` surfaces stuck beads
+    # for triage by /bw-monitor or the operator. stage:merging is preserved
+    # — the bead is still in the merge phase, just not progressing.
+    bd update "$BEAD_ID" --add-label merge-timeout >/dev/null 2>&1 || true
+    update_manifest "$BEAD_ID" '. + {last_successful_step: "merge-wait-timeout"}'
     exit 2
   fi
 
@@ -191,7 +213,17 @@ if [ "$RESULT_STATE" = "merged" ]; then
     echo "  (No merge commit SHA available — skipping reachability check.)"
   fi
 
-  bd update "$BEAD_ID" --remove-label stage:merging --remove-label stage:review-hold --add-label stage:landed >/dev/null 2>&1 || true
+  bd update "$BEAD_ID" --remove-label stage:merging --remove-label stage:review-hold --remove-label merge-timeout --add-label stage:landed >/dev/null 2>&1 || true
+
+  MERGE_COMMIT_JSON="${MERGE_COMMIT:-}"
+  if [ -n "$MERGE_COMMIT_JSON" ] && [ "$MERGE_COMMIT_JSON" != "null" ]; then
+    update_manifest "$BEAD_ID" \
+      --arg mc "$MERGE_COMMIT_JSON" \
+      '. + {stage: "landed", merge_commit: $mc, last_successful_step: "merge-wait-landed"}'
+  else
+    update_manifest "$BEAD_ID" \
+      '. + {stage: "landed", last_successful_step: "merge-wait-landed"}'
+  fi
 
   if [ "$BEAD_STATUS" != "closed" ]; then
     echo "▶ Closing bead..."

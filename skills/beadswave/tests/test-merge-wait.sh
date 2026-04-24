@@ -71,6 +71,8 @@ test_merge_wait_records_timeout_in_manifest() (
   assert_file_not_contains "$TRACE_FILE" $'bd\tclose\tmfcapp-123'
   assert_file_contains "$(manifest_path_for "$tmp/repo" "mfcapp-123")" '"last_successful_step": "merge-wait-timeout"'
   assert_file_contains "$(manifest_path_for "$tmp/repo" "mfcapp-123")" '"stage": "merging"'
+  # Stuck beads should be queryable via `bd list --label merge-timeout`.
+  assert_file_contains "$TRACE_FILE" $'bd\tupdate\tmfcapp-123\t--add-label\tmerge-timeout'
 )
 
 run_test "merge-wait marks the manifest landed after merge" test_merge_wait_marks_manifest_landed_after_merge

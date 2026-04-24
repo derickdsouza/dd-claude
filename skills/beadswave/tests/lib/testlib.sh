@@ -267,7 +267,9 @@ if [[ "${1:-}" == "pr" && "${2:-}" == "view" ]]; then
       printf '%s\n' '{"state":"OPEN","mergedAt":null,"autoMergeRequest":null}'
       ;;
     custom)
-      printf '%s\n' "${GH_PR_VIEW_JSON:-{}}"
+      # Note: ${VAR:-{}} parses as default of "{" plus literal "}", which
+      # appends a spurious closing brace. Use a quoted default to avoid it.
+      printf '%s\n' "${GH_PR_VIEW_JSON:-"{}"}"
       ;;
     *)
       echo "unexpected GH_PR_VIEW_MODE: ${GH_PR_VIEW_MODE}" >&2
