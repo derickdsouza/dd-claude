@@ -253,6 +253,54 @@ test_request_pr_auto_merge_retries_methods() (
   assert_order "$TRACE_FILE" $'gh\tpr\tmerge\t321\t--squash\t--auto\t--delete-branch' $'gh\tpr\tmerge\t321\t--merge\t--auto\t--delete-branch' "merge helper should retry with the next method"
 )
 
+test_dirty_paths_excludes_system_owned_lock_files() (
+  set -euo pipefail
+  local tmp
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  create_basic_repo "$tmp/repo"
+  (
+    cd "$tmp/repo"
+    mkdir -p .beadswave .claude
+    printf '{}\n' > .beadswave/templates.lock.json
+    printf 'lock\n' > .claude/scheduled_tasks.lock
+    git -c user.email=t@t -c user.name=t add -A
+    git -c user.email=t@t -c user.name=t commit -q -m init
+    # Now "dirty" them by touching
+    printf '{"x":1}\n' > .beadswave/templates.lock.json
+    printf 'lock-v2\n' > .claude/scheduled_tasks.lock
+  )
+  # shellcheck disable=SC1090
+  . "$RUNTIME_SCRIPT"
+  local dirty
+  dirty="$(beadswave_dirty_paths "$tmp/repo")"
+  assert_eq "" "$dirty" "system-owned lock files should be filtered out of dirty paths"
+)
+
+test_dirty_paths_still_reports_real_user_changes() (
+  set -euo pipefail
+  local tmp
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  create_basic_repo "$tmp/repo"
+  (
+    cd "$tmp/repo"
+    mkdir -p .beadswave src
+    printf '{}\n' > .beadswave/templates.lock.json
+    printf 'hello\n' > src/app.js
+    git -c user.email=t@t -c user.name=t add -A
+    git -c user.email=t@t -c user.name=t commit -q -m init
+    printf '{"x":1}\n' > .beadswave/templates.lock.json
+    printf 'world\n' > src/app.js
+  )
+  # shellcheck disable=SC1090
+  . "$RUNTIME_SCRIPT"
+  local dirty
+  dirty="$(beadswave_dirty_paths "$tmp/repo")"
+  assert_contains "$dirty" "src/app.js"
+  assert_not_contains "$dirty" ".beadswave/templates.lock.json"
+)
+
 test_assert_branch_free_here_ok_when_branch_unused() (
   set -euo pipefail
   local tmp
@@ -321,6 +369,8 @@ run_test "runtime lock helpers use lock directories" test_lock_helpers_use_lock_
 run_test "runtime derives project prefix from bead ids" test_project_prefix_prefers_bd_issue_prefix
 run_test "runtime expands short bead ids" test_expand_bead_id_qualifies_short_ids
 run_test "runtime retries GitHub auto-merge methods" test_request_pr_auto_merge_retries_methods
+run_test "runtime dirty-paths excludes system-owned lock files" test_dirty_paths_excludes_system_owned_lock_files
+run_test "runtime dirty-paths reports real user changes" test_dirty_paths_still_reports_real_user_changes
 run_test "runtime asserts branch free when unused" test_assert_branch_free_here_ok_when_branch_unused
 run_test "runtime asserts branch free when current worktree owns it" test_assert_branch_free_here_ok_when_current_worktree_owns_branch
 run_test "runtime asserts branch collision when other worktree owns it" test_assert_branch_free_here_fails_when_branch_in_other_worktree

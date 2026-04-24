@@ -536,6 +536,23 @@ beadswave_dirty_paths() {
     repo_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
   fi
 
+  # System-owned lock files: machine-local artifacts produced by the skill
+  # or the Claude Code harness, never part of user work. Filtered out so
+  # they don't block queue-hygiene / bd-ship. Extend via
+  # BEADSWAVE_DIRTY_IGNORE (newline- or colon-separated glob-free paths).
+  local ignore_regex='^(\.beadswave/templates\.lock\.json(\.tmp)?|\.claude/scheduled_tasks\.lock|\.beads/auto-pr\.log)$'
+  local extra="${BEADSWAVE_DIRTY_IGNORE:-}"
+  if [[ -n "$extra" ]]; then
+    local IFS=$'\n:'
+    local p
+    for p in $extra; do
+      [[ -z "$p" ]] && continue
+      local escaped
+      escaped="$(printf '%s' "$p" | sed 's/[.[\*^$()+?{|]/\\&/g')"
+      ignore_regex="${ignore_regex%\$}|^${escaped}\$"
+    done
+  fi
+
   {
     (
       cd "$repo_root" &&
@@ -545,7 +562,8 @@ beadswave_dirty_paths() {
       cd "$repo_root" &&
       git diff --cached --name-only --ignore-submodules=all 2>/dev/null
     ) || true
-  } | sed '/^$/d' | sort -u
+  } | sed '/^$/d' | sort -u | { grep -Ev "$ignore_regex" || true; }
+  # Trailing `|| true` keeps an empty grep (exit 1) from tripping `set -e`.
 }
 
 beadswave_require_clean_worktree() {
