@@ -225,13 +225,17 @@ fi
 # hiccup, or manual label re-apply). Re-issue `gh pr merge --auto` so the
 # conveyor belt resumes moving.
 if [ "$SCAN_ORPHANS" = "true" ]; then
+  # Repos that brand their auto-merge label differently (e.g. "ship-it",
+  # "release-ready") would never trigger the orphan repair without this
+  # override — silently missing the exact PRs this scan exists to catch.
+  ORPHAN_LABEL="${BEADSWAVE_ORPHAN_LABEL:-auto-merge}"
   echo
-  echo "Scanning for stuck labeled PRs missing merge handoff..."
-  ORPHAN_RAW=$(gh pr list --state open --label auto-merge --json number,title,headRefName 2>/dev/null || echo '[]')
+  echo "Scanning for stuck labeled PRs missing merge handoff (label=$ORPHAN_LABEL)..."
+  ORPHAN_RAW=$(gh pr list --state open --label "$ORPHAN_LABEL" --json number,title,headRefName 2>/dev/null || echo '[]')
   ORPHAN_COUNT=$(echo "$ORPHAN_RAW" | jq 'length' 2>/dev/null || echo 0)
 
   if [ "$ORPHAN_COUNT" -eq 0 ]; then
-    echo "  No auto-merge labeled PRs found."
+    echo "  No $ORPHAN_LABEL labeled PRs found."
   else
     echo "$ORPHAN_RAW" | jq -c '.[]' | while read -r pr; do
       n=$(echo "$pr" | jq -r '.number // .n')

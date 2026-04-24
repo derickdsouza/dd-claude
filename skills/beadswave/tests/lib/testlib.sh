@@ -284,6 +284,14 @@ if [[ "${1:-}" == "pr" && "${2:-}" == "list" ]]; then
     printf '%s\n' "$GH_PR_LIST_AUTO_MERGE_JSON"
     exit 0
   fi
+  # Generic label match: tests can set GH_PR_LIST_LABEL_MATCH_LABEL=<label>
+  # and GH_PR_LIST_LABEL_MATCH_JSON=<json> to stub a non-default orphan label.
+  if [[ -n "${GH_PR_LIST_LABEL_MATCH_LABEL:-}" \
+        && " $* " == *" --label ${GH_PR_LIST_LABEL_MATCH_LABEL} "* \
+        && -n "${GH_PR_LIST_LABEL_MATCH_JSON:-}" ]]; then
+    printf '%s\n' "$GH_PR_LIST_LABEL_MATCH_JSON"
+    exit 0
+  fi
   if [[ -n "${GH_PR_LIST_ORPHAN_JSON:-}" ]]; then
     printf '%s\n' "$GH_PR_LIST_ORPHAN_JSON"
     exit 0
