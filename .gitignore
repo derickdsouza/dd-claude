@@ -70,6 +70,7 @@ Thumbs.db
 security_warnings_state_*.json
 *.backup
 history.jsonl
+sessions/
 
 # Generated/temporary files
 config.json
