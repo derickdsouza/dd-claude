@@ -82,5 +82,45 @@ test_queue_hygiene_fails_closed_on_dirty_tracked_changes() (
   assert_file_not_contains "$TRACE_FILE" $'monitor-prs-wrapper'
 )
 
+test_queue_hygiene_auto_heals_stale_shipping_labels() (
+  set -euo pipefail
+  local tmp output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  setup_queue_hygiene_fixture "$tmp"
+  # One bead stuck in stage:shipping for 2 hours — orphaned by an earlier
+  # crashed ship. Queue-hygiene should auto-heal it, not hard-fail.
+  export BD_LIST_JSON='[{"id":"mfcapp-stale","status":"in_progress","updated_at":"2020-01-01T00:00:00Z","labels":["stage:shipping"]}]'
+
+  set +e
+  output="$(cd "$tmp/repo" && "$QUEUE_HYGIENE_SCRIPT" --phase preflight 2>&1)"
+  status=$?
+  set -e
+
+  assert_eq "0" "$status" "queue-hygiene should heal stale stage:shipping and succeed"
+  assert_contains "$output" "auto-healed stale stage:shipping on mfcapp-stale"
+  assert_file_contains "$TRACE_FILE" $'bd\tupdate\tmfcapp-stale\t--remove-label\tstage:shipping'
+)
+
+test_queue_hygiene_respects_block_mode_for_stale_shipping() (
+  set -euo pipefail
+  local tmp output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  setup_queue_hygiene_fixture "$tmp"
+  export BD_LIST_JSON='[{"id":"mfcapp-stale","status":"in_progress","updated_at":"2020-01-01T00:00:00Z","labels":["stage:shipping"]}]'
+
+  set +e
+  output="$(cd "$tmp/repo" && BEADSWAVE_STALE_SHIPPING_MODE=block "$QUEUE_HYGIENE_SCRIPT" --phase preflight 2>&1)"
+  status=$?
+  set -e
+
+  assert_eq "8" "$status" "block mode should preserve fail-closed behavior"
+  assert_contains "$output" "refusing to auto-heal"
+  assert_file_not_contains "$TRACE_FILE" $'bd\tupdate\tmfcapp-stale\t--remove-label\tstage:shipping'
+)
+
 run_test "queue-hygiene runs prune and monitor passes" test_queue_hygiene_runs_prune_and_monitor
 run_test "queue-hygiene fails closed on dirty tracked changes" test_queue_hygiene_fails_closed_on_dirty_tracked_changes
+run_test "queue-hygiene auto-heals stale stage:shipping labels" test_queue_hygiene_auto_heals_stale_shipping_labels
+run_test "queue-hygiene respects block mode for stale stage:shipping" test_queue_hygiene_respects_block_mode_for_stale_shipping

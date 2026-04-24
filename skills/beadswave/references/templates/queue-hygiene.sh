@@ -137,10 +137,25 @@ except Exception:
 " 2>/tmp/bw_stale_shipping.txt || true)
 
 if [ "${STALE_SHIPPING:-0}" -gt 0 ]; then
+  # bd-ship installs an EXIT trap that clears stage:shipping on every
+  # abnormal exit, so any bead still carrying the label after
+  # STALE_SHIPPING_MINUTES is definitively orphaned (not mid-ship). Auto-heal
+  # by clearing the label — hard-failing here used to block /waves preflight
+  # and force manual label surgery. Set BEADSWAVE_STALE_SHIPPING_MODE=block
+  # to restore the old fail-closed behavior.
+  local_mode="${BEADSWAVE_STALE_SHIPPING_MODE:-heal}"
   warn "Found ${STALE_SHIPPING} bead(s) stuck in stage:shipping > ${STALE_SHIPPING_MINUTES}min:"
   cat /tmp/bw_stale_shipping.txt >&2 2>/dev/null || true
-  warn "Re-run bd-ship for each stuck bead, or remove 'stage:shipping' label manually."
-  exit 8
+  if [ "$local_mode" = "block" ]; then
+    warn "BEADSWAVE_STALE_SHIPPING_MODE=block — refusing to auto-heal."
+    warn "Re-run bd-ship for each stuck bead, or remove 'stage:shipping' label manually."
+    exit 8
+  fi
+  while IFS= read -r stale_id; do
+    [ -n "$stale_id" ] || continue
+    bd update "$stale_id" --remove-label stage:shipping >/dev/null 2>&1 || true
+    say "auto-healed stale stage:shipping on $stale_id"
+  done </tmp/bw_stale_shipping.txt
 fi
 rm -f /tmp/bw_stale_shipping.txt
 
