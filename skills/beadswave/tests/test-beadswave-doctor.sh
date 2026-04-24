@@ -68,5 +68,28 @@ test_doctor_reports_missing_manifest_for_target_bead() (
   assert_not_contains "$output" '"auto_fixed": true'
 )
 
+test_doctor_flags_beads_with_stage_label_but_no_manifest() (
+  set -euo pipefail
+  local tmp output status
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  setup_doctor_fixture "$tmp"
+  # Bead carries stage:merging but no manifest was ever written — this is
+  # the exact drift pipeline-driver's manifest-fallback cannot recover
+  # from (nothing to fall back to). Doctor should surface it so the
+  # operator can re-run bd-ship or remove the stale label.
+  export BD_LIST_JSON='[{"id":"mfcapp-orphan","status":"in_progress","labels":["stage:merging"]}]'
+
+  set +e
+  output="$(cd "$tmp/repo" && "$DOCTOR_SCRIPT" --json 2>&1)"
+  status=$?
+  set -e
+
+  assert_eq "0" "$status" "doctor should succeed and report orphan-stage-label as a finding"
+  assert_contains "$output" '"kind": "orphan-stage-label"'
+  assert_contains "$output" '"bead_id": "mfcapp-orphan"'
+)
+
 run_test "beadswave doctor repairs merged PRs whose beads stayed open" test_doctor_repairs_merged_pr_open_bead
 run_test "beadswave doctor reports missing manifests for targeted beads" test_doctor_reports_missing_manifest_for_target_bead
+run_test "beadswave doctor flags stage-labeled beads missing their manifest" test_doctor_flags_beads_with_stage_label_but_no_manifest

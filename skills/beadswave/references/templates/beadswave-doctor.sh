@@ -350,6 +350,56 @@ for manifest_path in "${MANIFEST_PATHS[@]}"; do
   inspect_manifest "$manifest_path"
 done
 
+# ── Orphan-stage-label scan ───────────────────────────────────────────────
+# Beads that carry an in-flight stage:* label but have NO manifest on disk
+# are invisible to pipeline-driver's manifest-fallback — there is nothing
+# to fall back to. Only meaningful on a full sweep (no explicit targets).
+if [[ "${#TARGET_BEADS[@]}" -eq 0 ]]; then
+  ORPHAN_JSON="$(bd list --status=in_progress --json -n 0 2>/dev/null || echo '[]')"
+  printf '%s' "$ORPHAN_JSON" | BEADSWAVE_STATE_DIR="$STATE_DIR" python3 -c '
+import json, os, sys
+state_dir = os.environ["BEADSWAVE_STATE_DIR"]
+try:
+    beads = json.load(sys.stdin)
+except Exception:
+    beads = []
+INFLIGHT = {"stage:shipping", "stage:merging", "stage:review-hold"}
+for b in beads:
+    bid = b.get("id") or ""
+    if not bid:
+        continue
+    labels = [l if isinstance(l, str) else l.get("name", "") for l in (b.get("labels") or [])]
+    stage_labels = [l for l in labels if l in INFLIGHT]
+    if not stage_labels:
+        continue
+    manifest = os.path.join(state_dir, f"{bid}.json")
+    if os.path.isfile(manifest):
+        continue
+    print(json.dumps({
+        "bead_id": bid,
+        "kind": "orphan-stage-label",
+        "severity": "warning",
+        "detail": f"Bead carries {stage_labels[0]} but has no manifest on disk.",
+        "fixable": False,
+        "meta": {"stage_label": stage_labels[0]},
+    }))
+' >> "$FINDINGS_FILE"
+  # Mirror orphan findings to stdout when not in --json mode so the human
+  # summary includes them.
+  if [[ "$JSON_OUTPUT" != "true" ]]; then
+    grep -F '"orphan-stage-label"' "$FINDINGS_FILE" 2>/dev/null \
+      | python3 -c "
+import json, sys
+for line in sys.stdin:
+    line = line.strip()
+    if not line: continue
+    try: d = json.loads(line)
+    except: continue
+    print(f\"[{d['severity']}] {d['bead_id']} {d['kind']}: {d['detail']}\")
+" || true
+  fi
+fi
+
 if [[ "$JSON_OUTPUT" == "true" ]]; then
   python3 - "$FINDINGS_FILE" <<'PY'
 import json
