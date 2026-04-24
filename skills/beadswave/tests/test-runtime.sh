@@ -415,4 +415,33 @@ test_worktree_commits_behind_missing_branch_returns_zero() (
 
 run_test "runtime asserts branch collision when other worktree owns it" test_assert_branch_free_here_fails_when_branch_in_other_worktree
 run_test "runtime reports drain-branch commits behind origin/main" test_worktree_commits_behind_reports_drift
+test_manifest_update_under_lock_serializes_concurrent_writers() (
+  set -euo pipefail
+  local tmp counter
+  tmp="$(mktemp -d)"
+  trap 'rm -rf "$tmp"' EXIT
+  create_basic_repo "$tmp/repo"
+  mkdir -p "$tmp/repo/.git/beadswave-state"
+  printf '%s\n' '{"bead_id":"mfcapp-race","counter":0}' > "$tmp/repo/.git/beadswave-state/mfcapp-race.json"
+  # shellcheck disable=SC1090
+  . "$RUNTIME_SCRIPT"
+
+  # Launch 10 concurrent increments. Without locking, lost-update races would
+  # produce a final counter < 10. The helper must serialize writes so the
+  # final value equals the exact number of increments.
+  local i pids=()
+  for i in $(seq 1 10); do
+    (
+      beadswave_update_manifest_locked "$tmp/repo" "mfcapp-race" \
+        '.counter = (.counter + 1)' >/dev/null 2>&1
+    ) &
+    pids+=("$!")
+  done
+  for p in "${pids[@]}"; do wait "$p"; done
+
+  counter="$(jq -r '.counter' "$tmp/repo/.git/beadswave-state/mfcapp-race.json")"
+  assert_eq "10" "$counter" "all 10 concurrent increments should be visible under lock"
+)
+
 run_test "runtime reports 0 commits behind when drain branch is missing" test_worktree_commits_behind_missing_branch_returns_zero
+run_test "runtime serializes concurrent manifest updates under per-bead lock" test_manifest_update_under_lock_serializes_concurrent_writers

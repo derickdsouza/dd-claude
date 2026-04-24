@@ -678,6 +678,47 @@ beadswave_ensure_worktree() {
   printf '%s\n' "$wt"
 }
 
+beadswave_update_manifest_locked() {
+  # Read-modify-write a bead's state manifest under a per-bead lockdir so
+  # concurrent writers (bd-ship + merge-wait, pipeline-driver retries,
+  # monitor-prs auto-heal) cannot lose updates. mktemp+mv alone gives
+  # tear-free writes but still permits lost-update races when two readers
+  # load the same JSON, mutate it, and both write back.
+  #
+  # Usage:
+  #   beadswave_update_manifest_locked <repo_root> <bead_id> <jq-args...>
+  local repo_root="${1:-}"
+  local bead_id="${2:-}"
+  shift 2 || true
+  [[ -n "$repo_root" && -n "$bead_id" ]] || return 1
+  local path="$repo_root/.git/beadswave-state/$bead_id.json"
+  [[ -f "$path" ]] || return 0
+
+  local lock_dir="$repo_root/.beads/.manifest-${bead_id}.lockdir"
+  mkdir -p "$(dirname "$lock_dir")" 2>/dev/null || true
+  # Bounded retry: 200 tries * 50ms = 10s max wait. Long enough for any
+  # realistic contention window, short enough to fail loud instead of hang.
+  local attempts=0
+  while ! mkdir "$lock_dir" 2>/dev/null; do
+    attempts=$((attempts + 1))
+    if [[ $attempts -ge 200 ]]; then
+      return 1
+    fi
+    sleep 0.05
+  done
+
+  local tmp rc=0
+  tmp="$(mktemp)" || { rmdir "$lock_dir" 2>/dev/null; return 1; }
+  if jq "$@" "$path" > "$tmp" 2>/dev/null; then
+    mv "$tmp" "$path" || rc=1
+  else
+    rm -f "$tmp"
+    rc=1
+  fi
+  rmdir "$lock_dir" 2>/dev/null || true
+  return "$rc"
+}
+
 beadswave_worktree_commits_behind() {
   # Report how many commits the agent's drain/<agent> branch is behind origin/main.
   # Used by /waves and /drain to warn before handing work to a stale worktree —

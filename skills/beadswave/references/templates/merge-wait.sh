@@ -87,15 +87,11 @@ fi
 # state, not load-bearing.
 update_manifest() {
   local bead_id="$1"; shift
-  local path="$REPO_ROOT/.git/beadswave-state/$bead_id.json"
-  [ -f "$path" ] || return 0
-  local tmp
-  tmp="$(mktemp)" || return 0
-  if jq "$@" "$path" > "$tmp" 2>/dev/null; then
-    mv "$tmp" "$path"
-  else
-    rm -f "$tmp"
-  fi
+  # Delegate to the runtime's per-bead-locked helper so concurrent writers
+  # (e.g. monitor-prs auto-heal racing a live merge-wait poll) cannot
+  # clobber each other's updates. Failure is still a silent no-op — this
+  # is advisory state.
+  beadswave_update_manifest_locked "$REPO_ROOT" "$bead_id" "$@" 2>/dev/null || true
 }
 
 RAW_BEAD_ID="$BEAD_ID"

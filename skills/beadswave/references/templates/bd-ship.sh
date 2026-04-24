@@ -659,14 +659,12 @@ bd_ship_write_manifest() {
   local dir="$REPO_ROOT/.git/beadswave-state"
   local path="$dir/$BEAD_ID.json"
   mkdir -p "$dir" 2>/dev/null || return 0
+  # Bootstrap the manifest file so beadswave_update_manifest_locked has
+  # something to read. The seed write is a single-line echo — safe under
+  # concurrent bootstrap since filesystems atomize small writes, and the
+  # subsequent locked RMW serializes the real updates.
   [ -f "$path" ] || printf '{}\n' > "$path"
-  local tmp
-  tmp="$(mktemp)" || return 0
-  if jq "$@" "$path" > "$tmp" 2>/dev/null; then
-    mv "$tmp" "$path"
-  else
-    rm -f "$tmp"
-  fi
+  beadswave_update_manifest_locked "$REPO_ROOT" "$BEAD_ID" "$@" 2>/dev/null || true
 }
 
 # Guarantee stage:shipping is cleared on ANY abnormal exit below — rebase
