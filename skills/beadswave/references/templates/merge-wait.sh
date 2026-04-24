@@ -23,6 +23,7 @@ set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 BEADSWAVE_RUNTIME="${BEADSWAVE_SKILL_DIR:-$HOME/.claude/skills/beadswave}/scripts/runtime.sh"
+BEADSWAVE_STAGE_MACHINE="${BEADSWAVE_SKILL_DIR:-$HOME/.claude/skills/beadswave}/scripts/stage_machine.sh"
 
 if [ -f "$BEADSWAVE_RUNTIME" ]; then
   # shellcheck disable=SC1090
@@ -31,6 +32,17 @@ else
   echo "beadswave runtime missing at $BEADSWAVE_RUNTIME" >&2
   exit 1
 fi
+
+if [ -f "$BEADSWAVE_STAGE_MACHINE" ]; then
+  # shellcheck disable=SC1090
+  . "$BEADSWAVE_STAGE_MACHINE"
+else
+  echo "beadswave stage_machine missing at $BEADSWAVE_STAGE_MACHINE" >&2
+  exit 1
+fi
+
+# Tell stage_machine's role-based porcelain that we're the merge path.
+export BEADSWAVE_STAGE_ROLE=merge
 
 TIMEOUT="${MERGE_WAIT_TIMEOUT:-1800}"
 POLL_INTERVAL="${MERGE_WAIT_POLL:-30}"
@@ -209,16 +221,20 @@ if [ "$RESULT_STATE" = "merged" ]; then
     echo "  (No merge commit SHA available — skipping reachability check.)"
   fi
 
-  bd update "$BEAD_ID" --remove-label stage:merging --remove-label stage:review-hold --remove-label merge-timeout --add-label stage:landed >/dev/null 2>&1 || true
+  # merging/review-hold → landed via the stage machine (LAND event).
+  # stage_machine owns the stage:* label transition and the .stage field;
+  # it also removes stage:review-hold if the bead went through a hold.
+  bead_advance "$BEAD_ID" >/dev/null 2>&1 || true
+  bd update "$BEAD_ID" --remove-label merge-timeout >/dev/null 2>&1 || true
 
   MERGE_COMMIT_JSON="${MERGE_COMMIT:-}"
   if [ -n "$MERGE_COMMIT_JSON" ] && [ "$MERGE_COMMIT_JSON" != "null" ]; then
     update_manifest "$BEAD_ID" \
       --arg mc "$MERGE_COMMIT_JSON" \
-      '. + {stage: "landed", merge_commit: $mc, last_successful_step: "merge-wait-landed"}'
+      '. + {merge_commit: $mc, last_successful_step: "merge-wait-landed"}'
   else
     update_manifest "$BEAD_ID" \
-      '. + {stage: "landed", last_successful_step: "merge-wait-landed"}'
+      '. + {last_successful_step: "merge-wait-landed"}'
   fi
 
   if [ "$BEAD_STATUS" != "closed" ]; then
