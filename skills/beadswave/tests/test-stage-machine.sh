@@ -234,6 +234,19 @@ test_bead_rollback_from_shipping_goes_to_branched() (
   assert_eq "branched" "$(bead_current bd-8)" "MERGE_FAIL should roll back to branched"
 )
 
+test_bead_rollback_from_merging_goes_to_branched() (
+  set -euo pipefail
+  eval "$(_sm_sandbox)"
+  # shellcheck disable=SC1090
+  . "$SM"
+
+  # PR closed without merging or queue-hygiene clearing a stale merging bead
+  # both want a clean rollback path from merging — same target as shipping.
+  printf 'merging' > "$LABELS/bd-21"
+  bead_rollback bd-21
+  assert_eq "branched" "$(bead_current bd-21)" "MERGE_FAIL from merging should also reach branched"
+)
+
 run_test "bead_current defaults to committed"           test_bead_current_defaults_to_committed
 run_test "bead_current reads label from bd shim"        test_bead_current_reads_label
 run_test "bead_current parses array-wrapped bd output"  test_bead_current_reads_array_wrapped_bd_output
@@ -301,6 +314,7 @@ test_bead_intent_replay_resumes_after_crash_between_manifest_and_label() (
 )
 
 run_test "bead_rollback from shipping → branched"       test_bead_rollback_from_shipping_goes_to_branched
+run_test "bead_rollback from merging → branched"        test_bead_rollback_from_merging_goes_to_branched
 run_test "bead_transition preserves foreign manifest fields" test_bead_transition_preserves_foreign_manifest_fields
 run_test "bead_intent_replay no-op when already DONE"   test_bead_intent_replay_no_pending_is_noop
 run_test "bead_intent_replay resumes crashed transition" test_bead_intent_replay_resumes_after_crash_between_manifest_and_label

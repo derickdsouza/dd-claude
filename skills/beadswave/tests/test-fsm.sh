@@ -68,6 +68,7 @@ test_full_legality_truth_table() (
     "shipping|MERGE_OK|merging|$with_bead"
     "shipping|HOLD|review-hold|$base"
     "shipping|MERGE_FAIL|branched|$base"
+    "merging|MERGE_FAIL|branched|$base"
     "merging|LAND|landed|$with_bead"
     "merging|HOLD|review-hold|$base"
     "review-hold|RESUME|merging|$base"
@@ -92,7 +93,7 @@ test_full_legality_truth_table() (
     "committed|MERGE_OK" "committed|LAND" "committed|HOLD" "committed|RESUME" "committed|MERGE_FAIL"
     "branched|BRANCH"    "branched|MERGE_OK" "branched|LAND" "branched|HOLD" "branched|RESUME" "branched|MERGE_FAIL"
     "shipping|BRANCH"    "shipping|SHIP"     "shipping|LAND" "shipping|RESUME"
-    "merging|BRANCH"     "merging|SHIP"      "merging|MERGE_OK" "merging|MERGE_FAIL" "merging|RESUME"
+    "merging|BRANCH"     "merging|SHIP"      "merging|MERGE_OK" "merging|RESUME"
     "review-hold|BRANCH" "review-hold|SHIP"  "review-hold|MERGE_OK" "review-hold|MERGE_FAIL" "review-hold|HOLD"
   )
 
@@ -118,7 +119,7 @@ test_legal_events_enumerates_all_legal_pairs() (
     "committed|BRANCH SHIP"
     "branched|SHIP"
     "shipping|HOLD MERGE_FAIL MERGE_OK"
-    "merging|HOLD LAND"
+    "merging|HOLD LAND MERGE_FAIL"
     "review-hold|LAND RESUME"
     "landed|"
   )

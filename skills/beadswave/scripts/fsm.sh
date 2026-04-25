@@ -27,6 +27,7 @@ fsm_next() {
     shipping/MERGE_OK)      printf 'merging\t%s\n'     "$with_bead" ;;
     shipping/HOLD)          printf 'review-hold\t%s\n' "$base" ;;
     shipping/MERGE_FAIL)    printf 'branched\t%s\n'    "$base" ;;
+    merging/MERGE_FAIL)     printf 'branched\t%s\n'    "$base" ;;
     merging/LAND)           printf 'landed\t%s\n'      "$with_bead" ;;
     merging/HOLD)           printf 'review-hold\t%s\n' "$base" ;;
     review-hold/RESUME)     printf 'merging\t%s\n'     "$base" ;;
