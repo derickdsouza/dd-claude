@@ -254,10 +254,11 @@ fi
 
 echo "  $RESULT_DETAIL" >&2
 if [ "$RESULT_STATE" = "closed" ]; then
-  # PR was closed without merging — usually a manual abandon. Tag the bead
-  # so `bd list --label pr-closed-unmerged` surfaces it for triage, and
-  # clear stage:merging so queue-hygiene doesn't re-flag it as stale.
-  bd update "$BEAD_ID" --remove-label stage:merging --add-label pr-closed-unmerged >/dev/null 2>&1 || true
+  # PR was closed without merging — usually a manual abandon. Roll the bead
+  # back to branched (clears stage:merging) so queue-hygiene doesn't re-flag
+  # it as stale, and tag with pr-closed-unmerged for triage.
+  bead_rollback "$BEAD_ID" >/dev/null 2>&1 || true
+  bd update "$BEAD_ID" --add-label pr-closed-unmerged >/dev/null 2>&1 || true
   update_manifest "$BEAD_ID" '. + {last_successful_step: "merge-wait-closed-unmerged"}'
 fi
 exit 3

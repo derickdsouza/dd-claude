@@ -91,6 +91,9 @@ test_queue_hygiene_auto_heals_stale_shipping_labels() (
   # One bead stuck in stage:shipping for 2 hours — orphaned by an earlier
   # crashed ship. Queue-hygiene should auto-heal it, not hard-fail.
   export BD_LIST_JSON='[{"id":"mfcapp-stale","status":"in_progress","updated_at":"2020-01-01T00:00:00Z","labels":["stage:shipping"]}]'
+  # bead_rollback reads the current stage via `bd show` before transitioning;
+  # the shared fake-bd shim returns BD_SHOW_JSON for any id.
+  export BD_SHOW_JSON='[{"id":"mfcapp-stale","status":"in_progress","labels":["stage:shipping"]}]'
 
   set +e
   output="$(cd "$tmp/repo" && "$QUEUE_HYGIENE_SCRIPT" --phase preflight 2>&1)"

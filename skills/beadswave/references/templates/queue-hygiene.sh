@@ -29,6 +29,12 @@ fi
 # shellcheck disable=SC1090
 . "$BEADSWAVE_RUNTIME"
 
+BEADSWAVE_STAGE_MACHINE="${BEADSWAVE_SKILL_DIR:-$HOME/.claude/skills/beadswave}/scripts/stage_machine.sh"
+if [ -f "$BEADSWAVE_STAGE_MACHINE" ]; then
+  # shellcheck disable=SC1090
+  . "$BEADSWAVE_STAGE_MACHINE"
+fi
+
 PHASE=""
 RUN_FETCH=1
 RUN_PRUNE=1
@@ -153,7 +159,7 @@ if [ "${STALE_SHIPPING:-0}" -gt 0 ]; then
   fi
   while IFS= read -r stale_id; do
     [ -n "$stale_id" ] || continue
-    bd update "$stale_id" --remove-label stage:shipping >/dev/null 2>&1 || true
+    bead_rollback "$stale_id" >/dev/null 2>&1 || true
     say "auto-healed stale stage:shipping on $stale_id"
   done </tmp/bw_stale_shipping.txt
 fi
