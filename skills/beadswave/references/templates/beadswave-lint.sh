@@ -139,6 +139,25 @@ echo
 echo "[custom pre-ship hooks — drift allowed, anti-patterns are not]"
 check_preship_hook
 
+check_stage_mutation_invariant() {
+  local hits
+  hits="$(grep -lE "bd[[:space:]]+update[[:space:]].*(--add-label|--remove-label)[[:space:]]+stage:" \
+    "$SKILL"/scripts/*.sh "$SKILL"/references/templates/*.sh 2>/dev/null \
+    | grep -vE "/(stage_machine|beadswave-lint)\.sh$" || true)"
+  if [ -z "$hits" ]; then
+    echo "  ✓ stage:* labels mutated only by stage_machine.sh"
+    return
+  fi
+  echo "  ✗ raw 'add-label stage:' / 'remove-label stage:' found outside stage_machine.sh:"
+  printf '    %s\n' $hits
+  echo "    Use bead_advance / bead_rollback / bead_divert from scripts/stage_machine.sh."
+  DRIFT=$((DRIFT+1))
+}
+
+echo
+echo "[stage-machine invariant — only stage_machine.sh may mutate stage:* labels]"
+check_stage_mutation_invariant
+
 echo
 echo "Summary: ${DRIFT} drift(s), ${WARN} warning(s)"
 if [ "$DRIFT" -gt 0 ]; then
