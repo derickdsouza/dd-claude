@@ -30,6 +30,8 @@ try:
     d = json.load(sys.stdin)
 except Exception:
     sys.exit(0)
+if isinstance(d, list):
+    d = d[0] if d else {}
 for l in d.get('labels', []):
     name = l if isinstance(l, str) else l.get('name', '')
     if name.startswith('stage:'):

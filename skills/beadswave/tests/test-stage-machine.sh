@@ -93,6 +93,28 @@ test_bead_current_reads_label() (
   assert_eq "shipping" "$(bead_current bd-7)" "label-backed stage read"
 )
 
+test_bead_current_reads_array_wrapped_bd_output() (
+  set -euo pipefail
+  eval "$(_sm_sandbox)"
+  # Real `bd show --json` sometimes returns [{...}] instead of {...}.
+  # Override BW_BD with a stub that emits the array-wrapped shape so we
+  # exercise that codepath without changing the shared fake-bd shim.
+  cat > "$TMP/bin/array-bd" <<'SH'
+#!/usr/bin/env bash
+case "$1" in
+  show) printf '[{"id":"%s","status":"open","labels":["stage:merging"]}]\n' "$2" ;;
+  update) exit 0 ;;
+esac
+SH
+  chmod +x "$TMP/bin/array-bd"
+  export BW_BD="$TMP/bin/array-bd"
+  # shellcheck disable=SC1090
+  . "$SM"
+
+  assert_eq "merging" "$(bead_current bd-30)" \
+    "bead_current must parse array-wrapped bd show output"
+)
+
 test_bead_current_prefers_manifest_over_label_on_drift() (
   set -euo pipefail
   eval "$(_sm_sandbox)"
@@ -214,6 +236,7 @@ test_bead_rollback_from_shipping_goes_to_branched() (
 
 run_test "bead_current defaults to committed"           test_bead_current_defaults_to_committed
 run_test "bead_current reads label from bd shim"        test_bead_current_reads_label
+run_test "bead_current parses array-wrapped bd output"  test_bead_current_reads_array_wrapped_bd_output
 run_test "bead_current prefers manifest on label drift" test_bead_current_prefers_manifest_over_label_on_drift
 run_test "bead_transition committed→branched commits"   test_bead_transition_committed_to_branched
 run_test "bead_transition illegal event returns 3"      test_bead_transition_illegal_event_returns_3
