@@ -144,7 +144,7 @@ test_pipeline_driver_falls_back_to_manifest_when_labels_missing() (
   set -e
 
   assert_eq "0" "$status" "pipeline-driver should resume from manifest when labels are missing"
-  assert_contains "$output" "current stage: stage:merging"
+  assert_contains "$output" "current stage: merging"
   assert_file_not_contains "$TRACE_FILE" "bd-ship-wrapper"
   assert_file_contains "$TRACE_FILE" $'merge-wait-wrapper\tmfcapp-123\t--timeout\t1800'
 )

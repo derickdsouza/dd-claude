@@ -38,6 +38,15 @@ else
   exit 1
 fi
 
+BEADSWAVE_STAGE_MACHINE="${BEADSWAVE_SKILL_DIR:-$HOME/.claude/skills/beadswave}/scripts/stage_machine.sh"
+if [ -f "$BEADSWAVE_STAGE_MACHINE" ]; then
+  # shellcheck disable=SC1090
+  . "$BEADSWAVE_STAGE_MACHINE"
+else
+  echo "beadswave stage_machine missing at $BEADSWAVE_STAGE_MACHINE" >&2
+  exit 1
+fi
+
 SKIP_MERGE_WAIT=false
 JSON_OUTPUT=false
 BEAD_ID=""
@@ -99,30 +108,13 @@ if [ -z "$BEAD_JSON" ]; then
   exit 1
 fi
 
-LABELS=$(printf '%s' "$BEAD_JSON" | jq -r 'if type=="array" then .[0].labels else .labels end // [] | if type=="array" then .[] else . end | select(startswith("stage:"))' 2>/dev/null || true)
-CURRENT_STAGE=$(printf '%s' "$LABELS" | head -1 || true)
-
-# Fallback to the state manifest when bd labels have drifted (auto-heal
-# cleared them, manual edits lost them, etc). The manifest is the
-# authoritative record of where bd-ship / merge-wait left the bead —
-# without this, a missing stage:merging label would cause pipeline-driver
-# to re-enter bd-ship on an already-pushed PR.
-if [ -z "$CURRENT_STAGE" ]; then
-  MANIFEST_PATH="$REPO_ROOT/.git/beadswave-state/$BEAD_ID.json"
-  if [ -f "$MANIFEST_PATH" ]; then
-    MANIFEST_STAGE=$(jq -r '.stage // empty' "$MANIFEST_PATH" 2>/dev/null || true)
-    if [ -n "$MANIFEST_STAGE" ] && [ "$MANIFEST_STAGE" != "null" ]; then
-      CURRENT_STAGE="stage:$MANIFEST_STAGE"
-      echo "  Label drift detected — resuming from manifest stage ($CURRENT_STAGE)."
-    fi
-  fi
-fi
+CURRENT_STAGE="$(BW_STATE_DIR="$REPO_ROOT/.git/beadswave-state" bead_current "$BEAD_ID")"
 BEAD_STATUS=$(printf '%s' "$BEAD_JSON" | jq -r 'if type=="array" then .[0].status else .status end // empty' 2>/dev/null)
 CLEANUP_ONLY=false
 
 if [ "$BEAD_STATUS" = "closed" ]; then
   CLEANUP_ONLY=true
-  CURRENT_STAGE="stage:landed"
+  CURRENT_STAGE="landed"
   echo "Bead '$BEAD_ID' is already closed; resuming cleanup only."
 fi
 
@@ -131,10 +123,10 @@ echo "▶ Pipeline driver: $BEAD_ID (current stage: ${CURRENT_STAGE:-none})"
 # ── Stage: shipping (bd-ship) ─────────────────────────────────────────
 if [ "$CLEANUP_ONLY" = "false" ] && {
   [ -z "$CURRENT_STAGE" ] ||
-  [ "$CURRENT_STAGE" = "stage:claimed" ] ||
-  [ "$CURRENT_STAGE" = "stage:branched" ] ||
-  [ "$CURRENT_STAGE" = "stage:committed" ] ||
-  [ "$CURRENT_STAGE" = "stage:shipping" ];
+  [ "$CURRENT_STAGE" = "claimed" ] ||
+  [ "$CURRENT_STAGE" = "branched" ] ||
+  [ "$CURRENT_STAGE" = "committed" ] ||
+  [ "$CURRENT_STAGE" = "shipping" ];
 }; then
   echo ""
   echo "═══ Stage: shipping (bd-ship) ═══"
@@ -171,7 +163,7 @@ if [ "$HOLD_PR" = "true" ]; then
   echo "  Skipping merge-wait because the PR is intentionally held for review."
   echo "Pipeline handed off: $BEAD_ID remains at stage:merging until review clears."
   exit 0
-elif [ "$SKIP_MERGE_WAIT" = "false" ] && [ "$CURRENT_STAGE" != "stage:landed" ]; then
+elif [ "$SKIP_MERGE_WAIT" = "false" ] && [ "$CURRENT_STAGE" != "landed" ]; then
   MERGE_WAIT_SCRIPT="$(beadswave_resolve_merge_wait "$REPO_ROOT" 2>/dev/null || true)"
   if [ -z "$MERGE_WAIT_SCRIPT" ] || [ ! -x "$MERGE_WAIT_SCRIPT" ]; then
     echo "merge-wait.sh not found. Repair beadswave adoption before retrying." >&2
@@ -191,7 +183,7 @@ elif [ "$SKIP_MERGE_WAIT" = "false" ] && [ "$CURRENT_STAGE" != "stage:landed" ];
     echo "Pipeline halted: merge-wait exited $EXIT_CODE" >&2
     exit "$EXIT_CODE"
   fi
-elif [ "$CURRENT_STAGE" = "stage:landed" ]; then
+elif [ "$CURRENT_STAGE" = "landed" ]; then
   echo "  Skipping merge-wait (already landed)."
 else
   echo "  Skipping merge-wait (--skip-merge-wait)."
