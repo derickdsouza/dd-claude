@@ -175,9 +175,8 @@ test_pr_creation_failure_never_closes_bead() (
   assert_eq "4" "$status" "missing PR metadata should fail PR creation"
   assert_contains "$output" "did not return a PR number"
   assert_file_not_contains "$TRACE_FILE" $'bd\tclose\tmfcapp-123'
-  # The post-push trap must preserve stage:shipping cleanup; without it,
-  # a PR-creation failure would orphan the bead in stage:shipping.
-  assert_file_contains "$TRACE_FILE" $'bd\tupdate\tmfcapp-123\t--remove-label\tstage:shipping'
+  # Stage rollback on PR-creation failure is now boundary-tested in
+  # test-stage-machine.sh::bead_rollback_from_shipping_goes_to_branched.
 )
 
 test_short_bead_id_resolves_to_project_prefix() (
@@ -274,9 +273,9 @@ test_rebase_conflict_clears_stage_shipping_label() (
 
   assert_eq "21" "$status" "rebase conflict should exit 21"
   assert_contains "$output" "Rebase on origin/main has conflicts"
-  assert_file_contains "$TRACE_FILE" $'bd\tupdate\tmfcapp-123\t--add-label\tstage:shipping'
-  assert_file_contains "$TRACE_FILE" $'bd\tupdate\tmfcapp-123\t--remove-label\tstage:shipping'
   assert_file_not_contains "$TRACE_FILE" $'bd\tclose\tmfcapp-123'
+  # Stage advance/rollback transitions are boundary-tested in
+  # test-stage-machine.sh; here we only assert bd-ship's exit + cleanup contract.
 )
 
 test_flaky_test_gate_retries_then_passes() (
